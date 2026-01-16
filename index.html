@@ -1,194 +1,241 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>BJP Digital Command Center • Mandsaur</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;700;800&display=swap" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Super Admin • BJP Digital Cell</title>
   
+  <!-- Font & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
   <style>
     :root {
-      --brand: #ff6a00; /* Saffron */
+      --sidebar-width: 260px;
+      --header-height: 60px;
+      --brand: #ff6a00;
       --brand-dark: #cc5500;
-      --accent: #1F3B73; /* BJP Blue */
-      --bg: #fdf8f5;
-      --surface: #ffffff;
+      --accent: #1F3B73;
+      --bg: #f4f6f9;
       --text: #333;
     }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: 'Noto Sans Devanagari', sans-serif; background: var(--bg); color: var(--text); }
-    
-    /* Header */
-    .header {
-      background: linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%);
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Noto Sans Devanagari', sans-serif; background: var(--bg); display: flex; height: 100vh; overflow: hidden; }
+
+    /* Login Screen Overlay */
+    #loginOverlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+      z-index: 9999; display: flex; align-items: center; justify-content: center;
+      flex-direction: column; color: white;
+    }
+    .login-box {
+      background: white; padding: 30px; border-radius: 12px;
+      text-align: center; width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .login-box h2 { color: var(--accent); margin-bottom: 20px; }
+    .login-box input {
+      width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px;
+      margin-bottom: 15px; font-size: 16px; outline: none;
+    }
+    .login-box button {
+      width: 100%; padding: 12px; background: var(--brand); color: white;
+      border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
+    }
+    .login-box button:hover { background: var(--brand-dark); }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: #1e293b;
       color: white;
-      padding: 20px;
-      text-align: center;
-      box-shadow: 0 4px 12px rgba(255, 106, 0, 0.2);
-    }
-    .header h1 { margin: 0; font-size: 24px; font-weight: 800; }
-    .header p { margin: 5px 0 0; opacity: 0.9; font-size: 14px; }
-
-    /* Main Grid */
-    .container {
-      max-width: 1200px;
-      margin: 30px auto;
-      padding: 0 15px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
-    }
-
-    /* Cards */
-    .card {
-      background: var(--surface);
-      border-radius: 16px;
-      padding: 25px;
-      text-align: center;
-      transition: transform 0.2s, box-shadow 0.2s;
-      border: 1px solid #eee;
-      border-bottom: 4px solid transparent;
-      text-decoration: none;
-      color: inherit;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      flex-shrink: 0;
+      transition: all 0.3s;
     }
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+    .logo {
+      height: var(--header-height);
+      display: flex; align-items: center; padding: 0 20px;
+      background: rgba(0,0,0,0.2); font-weight: bold; font-size: 18px;
+      color: var(--brand); letter-spacing: 1px;
+    }
+    .nav-links { flex: 1; padding: 20px 0; overflow-y: auto; }
+    .nav-item {
+      padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+      color: #cbd5e1; text-decoration: none; cursor: pointer;
+      border-left: 4px solid transparent; transition: 0.2s;
+    }
+    .nav-item:hover, .nav-item.active {
+      background: rgba(255, 255, 255, 0.05);
+      color: white; border-left-color: var(--brand);
+    }
+    .nav-header {
+      padding: 15px 20px 5px; font-size: 11px; text-transform: uppercase;
+      color: #64748b; font-weight: bold;
     }
 
-    /* Color Themes for Cards */
-    .card.visitor { border-bottom-color: #2196F3; }
-    .card.pravas { border-bottom-color: #4CAF50; }
-    .card.mandal { border-bottom-color: #FF9800; }
-
-    .icon-box {
-      width: 70px;
-      height: 70px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 15px;
-      font-size: 30px;
-      color: white;
-    }
-    .visitor .icon-box { background: linear-gradient(135deg, #2196F3, #1976D2); }
-    .pravas .icon-box { background: linear-gradient(135deg, #4CAF50, #388E3C); }
-    .mandal .icon-box { background: linear-gradient(135deg, #FF9800, #F57C00); }
-
-    .card h2 { margin: 0 0 10px; font-size: 20px; color: var(--accent); }
-    .card p { margin: 0; color: #666; font-size: 14px; line-height: 1.5; }
+    /* Main Content */
+    .main { flex: 1; display: flex; flex-direction: column; width: 100%; }
     
-    .btn-group {
-      margin-top: 15px;
-      display: flex;
-      gap: 10px;
-      width: 100%;
+    .header {
+      height: var(--header-height); background: white;
+      border-bottom: 1px solid #e2e8f0; display: flex; align-items: center;
+      justify-content: space-between; padding: 0 20px;
     }
-    .btn {
-      flex: 1;
-      padding: 8px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      text-decoration: none;
-      border: 1px solid #ddd;
-      color: #555;
-      transition: 0.2s;
+    .header h2 { font-size: 18px; color: var(--accent); }
+    .logout-btn {
+      color: #ef4444; font-weight: 600; cursor: pointer; font-size: 14px;
+      display: flex; align-items: center; gap: 5px;
     }
-    .btn:hover { background: #f5f5f5; color: var(--brand); border-color: var(--brand); }
-    .btn.primary { background: var(--accent); color: white; border: none; }
-    .btn.primary:hover { background: #2c4f96; }
 
-    /* Footer */
-    .footer {
-      text-align: center;
-      margin-top: 40px;
-      padding: 20px;
-      color: #888;
-      font-size: 13px;
-      border-top: 1px solid #eee;
+    /* Content Frame */
+    .content-area {
+      flex: 1; background: #f1f5f9; padding: 0; position: relative;
     }
+    iframe {
+      width: 100%; height: 100%; border: none; display: block;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar { position: absolute; left: -100%; height: 100%; z-index: 100; }
+      .sidebar.open { left: 0; }
+      .menu-toggle { display: block; cursor: pointer; font-size: 20px; margin-right: 15px; }
+    }
+    @media (min-width: 769px) { .menu-toggle { display: none; } }
   </style>
 </head>
 <body>
 
-  <div class="header">
-    <h1>Digital Command Center</h1>
-    <p>भारतीय जनता पार्टी • जिला मंदसौर</p>
+  <!-- 1. LOGIN OVERLAY -->
+  <div id="loginOverlay">
+    <div style="margin-bottom:20px; font-size:40px; background:white; color:#ff6a00; width:80px; height:80px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.2);">
+        <i class="fa-solid fa-om"></i>
+    </div>
+    <div class="login-box">
+      <h2>Super Admin Login</h2>
+      <input type="password" id="adminPass" placeholder="पासवर्ड डालें (bjp123)">
+      <button onclick="checkLogin()">लॉग इन करें</button>
+      <p id="errorMsg" style="color:red; font-size:12px; margin-top:10px; display:none;">गलत पासवर्ड!</p>
+    </div>
   </div>
 
-  <div class="container">
-    
-    <div class="card visitor">
-      <div class="icon-box"><i class="fa-solid fa-users"></i></div>
-      <h2>विज़िटर & ऑफिस</h2>
-      <p>कार्यालय आने वाले आगंतुकों का रिकॉर्ड, फोटो एंट्री, और दैनिक रिपोर्टिंग।</p>
-      <div class="btn-group">
-        <a href="visitor/index.html" class="btn" target="_blank">एंट्री फॉर्म</a>
-        <a href="visitor/admin.html" class="btn primary">एडमिन पैनल</a>
-      </div>
+  <!-- 2. SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="logo">
+      <i class="fa-solid fa-landmark" style="margin-right:10px;"></i> BJP DIGITAL
     </div>
-
-    <div class="card pravas">
-      <div class="icon-box"><i class="fa-solid fa-route"></i></div>
-      <h2>प्रवास कार्यक्रम</h2>
-      <p>माननीय जिला अध्यक्ष जी के प्रवास, दौरे, और जनसंपर्क कार्यक्रमों का मैनेजमेंट।</p>
-      <div class="btn-group">
-        <a href="pravas/index.html" class="btn primary">Hub / TV Mode</a>
-        <a href="pravas/karyakram_bulk_pdf_export.html" class="btn">PDF Export</a>
+    <div class="nav-links">
+      <div class="nav-item active" onclick="loadFrame('visitor/admin.html', 'विज़िटर डेटाबेस')">
+        <i class="fa-solid fa-users"></i> विज़िटर डेटाबेस
       </div>
-    </div>
-    <div class="card mandal">
-      <div class="icon-box"><i class="fa-solid fa-building-flag"></i></div>
-      <h2>मंडल रिपोर्टिंग</h2>
-      <p>21 मंडलों के इवेंट्स की लाइव रिपोर्टिंग, फोटो अपलोड और संयोजक प्रबंधन।</p>
       
-      <div class="btn-group">
-        <a href="mandal/report.html" class="btn" target="_blank">📝 रिपोर्ट करें</a>
-        <a href="mandal/dashboard.html" class="btn primary">📊 डैशबोर्ड</a>
+      <div class="nav-header">प्रवास मैनेजमेंट</div>
+      <div class="nav-item" onclick="loadFrame('pravas/index.html', 'प्रवास Hub (PDF/TV)')">
+        <i class="fa-solid fa-tv"></i> प्रवास Hub
+      </div>
+      <div class="nav-item" onclick="loadFrame('pravas/karyakram_bulk_pdf_export.html', 'प्रवास PDF Export')">
+        <i class="fa-solid fa-file-pdf"></i> PDF एक्सपोर्ट
       </div>
 
-      <div class="btn-group" style="margin-top:8px;">
-        <a href="mandal/event.html" class="btn" style="background:#fff3e0; color:#e65100; border-color:#e65100;">➕ नया इवेंट</a>
-        <a href="mandal/coordinator.html" class="btn" style="background:#fff3e0; color:#e65100; border-color:#e65100;">👤 संयोजक</a>
+      <div class="nav-header">मंडल रिपोर्टिंग</div>
+      <div class="nav-item" onclick="loadFrame('mandal/dashboard.html', 'मंडल डैशबोर्ड')">
+        <i class="fa-solid fa-chart-pie"></i> मंडल डैशबोर्ड
       </div>
-    </div>
-
-    <div class="card mandal">
-      <div class="icon-box"><i class="fa-solid fa-building-flag"></i></div>
-      <h2>मंडल रिपोर्टिंग</h2>
-      <p>21 मंडलों के इवेंट्स की लाइव रिपोर्टिंग, फोटो अपलोड और संयोजक प्रबंधन।</p>
-      <div class="btn-group">
-        <a href="mandal/report.html" class="btn" target="_blank">रिपोर्ट करें</a>
-        <a href="mandal/dashboard.html" class="btn primary">डैशबोर्ड</a>
+      <div class="nav-item" onclick="loadFrame('mandal/event.html', 'नया इवेंट बनाएं')">
+        <i class="fa-solid fa-plus-circle"></i> इवेंट जोड़ें
       </div>
-    </div>
-
-  </div>
-
-  <div class="container" style="margin-top:0;">
-    <div class="card" style="flex-direction:row; justify-content:space-between; align-items:center; text-align:left; border-left: 5px solid var(--brand);">
-      <div>
-        <h3 style="margin:0; color:var(--text)">Quick Utility</h3>
-        <p style="font-size:13px; margin-top:4px">Data Import tools & Settings</p>
+      <div class="nav-item" onclick="loadFrame('mandal/coordinator.html', 'संयोजक प्रबंधन')">
+        <i class="fa-solid fa-user-tie"></i> संयोजक जोड़ें
       </div>
-      <div style="display:flex; gap:10px;">
-        <a href="visitor/importer.html" class="btn">📂 Visitor CSV Import</a>
-        </div>
+
+      <div class="nav-header">Tools</div>
+      <div class="nav-item" onclick="loadFrame('visitor/importer.html', 'CSV डाटा इम्पोर्ट')">
+        <i class="fa-solid fa-upload"></i> डाटा इम्पोर्ट
+      </div>
+      <div class="nav-item" onclick="window.location.href='index.html'">
+        <i class="fa-solid fa-home"></i> मुख्य वेबसाइट पर जाएँ
+      </div>
     </div>
   </div>
 
-  <div class="footer">
-    Developed for BJP Mandsaur • IT Cell<br>
-    All systems running on Firebase Cloud
+  <!-- 3. MAIN AREA -->
+  <div class="main">
+    <div class="header">
+      <div style="display:flex; align-items:center;">
+        <i class="fa-solid fa-bars menu-toggle" onclick="toggleSidebar()"></i>
+        <h2 id="pageTitle">विज़िटर डेटाबेस</h2>
+      </div>
+      <div class="logout-btn" onclick="logout()">
+        <i class="fa-solid fa-power-off"></i> लॉग आउट
+      </div>
+    </div>
+    
+    <div class="content-area">
+      <!-- Default loads Visitor Admin -->
+      <iframe id="appFrame" src=""></iframe>
+    </div>
   </div>
 
+  <script>
+    // Security & Logic
+    const PASS = "bjp123"; // Admin Password
+    const overlay = document.getElementById('loginOverlay');
+    const iframe = document.getElementById('appFrame');
+    const pageTitle = document.getElementById('pageTitle');
+    const items = document.querySelectorAll('.nav-item');
+
+    // Check Login
+    function checkLogin() {
+      const inp = document.getElementById('adminPass').value;
+      if (inp === PASS) {
+        overlay.style.display = 'none';
+        sessionStorage.setItem('isLoggedIn', 'true');
+        // Load default page only after login
+        if(!iframe.src || iframe.src === window.location.href) {
+            loadFrame('visitor/admin.html', 'विज़िटर डेटाबेस');
+        }
+      } else {
+        document.getElementById('errorMsg').style.display = 'block';
+      }
+    }
+
+    // Auto-login if session exists
+    if (sessionStorage.getItem('isLoggedIn') === 'true') {
+      overlay.style.display = 'none';
+      loadFrame('visitor/admin.html', 'विज़िटर डेटाबेस');
+    }
+
+    function logout() {
+      sessionStorage.removeItem('isLoggedIn');
+      location.reload();
+    }
+
+    function loadFrame(url, title) {
+      // Remove active class from all
+      items.forEach(i => i.classList.remove('active'));
+      // Add active class to clicked (simple check)
+      event.currentTarget.classList.add('active');
+      
+      iframe.src = url;
+      pageTitle.textContent = title;
+      
+      // On mobile, close sidebar after click
+      if(window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.remove('open');
+      }
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+    }
+
+    // Handle iframe styling injection if needed (Advanced)
+    iframe.onload = function() {
+        // Optional: You can inject custom CSS into the iframe here if same origin
+    };
+  </script>
 </body>
-
 </html>
