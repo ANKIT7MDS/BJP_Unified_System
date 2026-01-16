@@ -45,6 +45,33 @@
     }
     .login-box button:hover { background: var(--brand-dark); }
 
+    /* Share Links Modal */
+    #shareModal {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6); z-index: 5000; align-items: center; justify-content: center;
+    }
+    .share-box {
+      background: white; width: 90%; max-width: 500px; padding: 25px; border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3); position: relative;
+    }
+    .share-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+    .share-header h3 { margin: 0; color: var(--accent); }
+    .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #666; }
+    
+    .link-item { margin-bottom: 15px; }
+    .link-item label { display: block; font-size: 13px; color: #666; margin-bottom: 5px; font-weight: 600; }
+    .link-input-group { display: flex; gap: 8px; }
+    .link-input-group input { 
+      flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; 
+      background: #f9f9f9; font-size: 13px; color: #333; 
+    }
+    .link-input-group button {
+      padding: 8px 12px; background: var(--accent); color: white; border: none; 
+      border-radius: 6px; cursor: pointer; font-size: 13px; white-space: nowrap;
+    }
+    .link-input-group button:hover { background: #2c4f96; }
+    .link-input-group button.copied { background: #4CAF50; }
+
     /* Sidebar */
     .sidebar {
       width: var(--sidebar-width);
@@ -89,6 +116,12 @@
       color: #ef4444; font-weight: 600; cursor: pointer; font-size: 14px;
       display: flex; align-items: center; gap: 5px;
     }
+    .share-trigger {
+      background: #eef2ff; color: var(--accent); padding: 6px 12px; border-radius: 20px;
+      font-size: 13px; font-weight: 600; cursor: pointer; margin-right: 15px; border: 1px solid #dbeafe;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .share-trigger:hover { background: #dbeafe; }
 
     /* Content Frame */
     .content-area {
@@ -103,6 +136,8 @@
       .sidebar { position: absolute; left: -100%; height: 100%; z-index: 100; }
       .sidebar.open { left: 0; }
       .menu-toggle { display: block; cursor: pointer; font-size: 20px; margin-right: 15px; }
+      .header h2 { font-size: 16px; }
+      .share-trigger span { display: none; } /* Hide text on mobile */
     }
     @media (min-width: 769px) { .menu-toggle { display: none; } }
   </style>
@@ -122,12 +157,57 @@
     </div>
   </div>
 
-  <!-- 2. SIDEBAR -->
+  <!-- 2. SHARE LINKS MODAL -->
+  <div id="shareModal">
+    <div class="share-box">
+      <div class="share-header">
+        <h3>🔗 पब्लिक फॉर्म लिंक्स (शेयर करें)</h3>
+        <button class="close-btn" onclick="toggleShareModal(false)">&times;</button>
+      </div>
+      <p style="font-size:13px; color:#666; margin-bottom:15px;">नीचे दिए गए लिंक्स को कॉपी करके संबंधित कार्यकर्ताओं या संयोजक को भेजें। ये लिंक्स बिना लॉगिन के खुलेंगे।</p>
+      
+      <div class="link-item">
+        <label>📝 रिपोर्टिंग फॉर्म (मंडल अध्यक्ष के लिए)</label>
+        <div class="link-input-group">
+          <input type="text" id="linkReport" readonly>
+          <button onclick="copyLink('linkReport', this)">Copy</button>
+        </div>
+      </div>
+
+      <div class="link-item">
+        <label>👤 संयोजक फॉर्म (नया संयोजक जोड़ने के लिए)</label>
+        <div class="link-input-group">
+          <input type="text" id="linkCoordinator" readonly>
+          <button onclick="copyLink('linkCoordinator', this)">Copy</button>
+        </div>
+      </div>
+
+      <div class="link-item">
+        <label>🗓️ इवेंट फॉर्म (नया कार्यक्रम जोड़ने के लिए)</label>
+        <div class="link-input-group">
+          <input type="text" id="linkEvent" readonly>
+          <button onclick="copyLink('linkEvent', this)">Copy</button>
+        </div>
+      </div>
+
+      <div class="link-item">
+        <label>🚶‍♂️ विज़िटर एंट्री (रिसेप्शन के लिए)</label>
+        <div class="link-input-group">
+          <input type="text" id="linkVisitor" readonly>
+          <button onclick="copyLink('linkVisitor', this)">Copy</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 3. SIDEBAR -->
   <div class="sidebar" id="sidebar">
     <div class="logo">
       <i class="fa-solid fa-landmark" style="margin-right:10px;"></i> BJP DIGITAL
     </div>
     <div class="nav-links">
+      <div class="nav-header">MAIN</div>
       <div class="nav-item active" onclick="loadFrame('visitor/admin.html', 'विज़िटर डेटाबेस')">
         <i class="fa-solid fa-users"></i> विज़िटर डेटाबेस
       </div>
@@ -144,14 +224,18 @@
       <div class="nav-item" onclick="loadFrame('mandal/dashboard.html', 'मंडल डैशबोर्ड')">
         <i class="fa-solid fa-chart-pie"></i> मंडल डैशबोर्ड
       </div>
+      <!-- Internal Admin Forms -->
       <div class="nav-item" onclick="loadFrame('mandal/event.html', 'नया इवेंट बनाएं')">
-        <i class="fa-solid fa-plus-circle"></i> इवेंट जोड़ें
+        <i class="fa-solid fa-plus-circle"></i> इवेंट जोड़ें (Admin)
       </div>
       <div class="nav-item" onclick="loadFrame('mandal/coordinator.html', 'संयोजक प्रबंधन')">
-        <i class="fa-solid fa-user-tie"></i> संयोजक जोड़ें
+        <i class="fa-solid fa-user-tie"></i> संयोजक जोड़ें (Admin)
       </div>
 
       <div class="nav-header">Tools</div>
+      <div class="nav-item" onclick="toggleShareModal(true)">
+        <i class="fa-solid fa-share-nodes"></i> <b>लिंक शेयर करें</b>
+      </div>
       <div class="nav-item" onclick="loadFrame('visitor/importer.html', 'CSV डाटा इम्पोर्ट')">
         <i class="fa-solid fa-upload"></i> डाटा इम्पोर्ट
       </div>
@@ -161,15 +245,20 @@
     </div>
   </div>
 
-  <!-- 3. MAIN AREA -->
+  <!-- 4. MAIN AREA -->
   <div class="main">
     <div class="header">
       <div style="display:flex; align-items:center;">
         <i class="fa-solid fa-bars menu-toggle" onclick="toggleSidebar()"></i>
         <h2 id="pageTitle">विज़िटर डेटाबेस</h2>
       </div>
-      <div class="logout-btn" onclick="logout()">
-        <i class="fa-solid fa-power-off"></i> लॉग आउट
+      <div style="display:flex; align-items:center;">
+        <button class="share-trigger" onclick="toggleShareModal(true)">
+          <i class="fa-solid fa-link"></i> <span>Form Links</span>
+        </button>
+        <div class="logout-btn" onclick="logout()">
+          <i class="fa-solid fa-power-off"></i> <span style="margin-left:5px">Log Out</span>
+        </div>
       </div>
     </div>
     
@@ -216,7 +305,7 @@
     function loadFrame(url, title) {
       // Remove active class from all
       items.forEach(i => i.classList.remove('active'));
-      // Add active class to clicked (simple check)
+      // Add active class to clicked
       event.currentTarget.classList.add('active');
       
       iframe.src = url;
@@ -232,10 +321,46 @@
       document.getElementById('sidebar').classList.toggle('open');
     }
 
-    // Handle iframe styling injection if needed (Advanced)
-    iframe.onload = function() {
-        // Optional: You can inject custom CSS into the iframe here if same origin
-    };
+    // --- SHARE LINK LOGIC ---
+    function toggleShareModal(show) {
+      const modal = document.getElementById('shareModal');
+      modal.style.display = show ? 'flex' : 'none';
+      if(show) generateLinks();
+    }
+
+    function generateLinks() {
+      // Get base URL (e.g., https://username.github.io/repo/ OR http://127.0.0.1:5500/)
+      // We assume super_admin.html is in the root along with visitor/, mandal/ folders
+      const basePath = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+
+      document.getElementById('linkReport').value = basePath + 'mandal/report.html';
+      document.getElementById('linkCoordinator').value = basePath + 'mandal/coordinator.html';
+      document.getElementById('linkEvent').value = basePath + 'mandal/event.html';
+      document.getElementById('linkVisitor').value = basePath + 'visitor/index.html';
+    }
+
+    function copyLink(inputId, btn) {
+      const input = document.getElementById(inputId);
+      input.select();
+      input.setSelectionRange(0, 99999); // For mobile
+      navigator.clipboard.writeText(input.value).then(() => {
+        const originalText = btn.textContent;
+        btn.textContent = "Copied!";
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+
+    // Handle click outside modal
+    window.onclick = function(event) {
+      const modal = document.getElementById('shareModal');
+      if (event.target == modal) {
+        toggleShareModal(false);
+      }
+    }
   </script>
 </body>
 </html>
