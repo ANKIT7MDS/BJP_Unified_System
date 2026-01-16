@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <title>डैशबोर्ड (फोटो-सहित तेज़ मल्टी-पेज PDF)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:;base64,=">
+  <style>
+    body { background:#fff9f3; color:#222; font-family:'Noto Sans Devanagari',Arial,sans-serif; margin:0; padding:0; }
+    .container { max-width:1200px; margin:24px auto; background:#fff6ea; border-radius:14px; box-shadow:0 2px 16px #ff980020; padding:18px 10px; }
+
+    #pdfHeader{ text-align:center; margin:6px 0 18px; }
+    #pdfHeader h1{ font-size:2.2rem; margin:0; color:#000; font-weight:700; text-decoration:underline;}
+    #pdfHeader h2{ font-size:1.6rem; margin:6px 0 0; color:#333; font-weight:600;}
+
+    h1.pageTitle{ color:#e65100; text-align:center; margin-bottom:12px; font-size:2.1rem;}
+    .top-bar{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; margin-bottom:10px;}
+    .top-bar .left,.top-bar .right{ display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+    .top-bar select,.top-bar button,.top-bar input[type="text"]{ font-size:1rem; padding:5px 9px; border-radius:5px; border:1.2px solid #ffa726a9; background:#fffaf5; color:#442300;}
+    .top-bar button,.tab-btn,input[type="submit"],.form-section button{ background:#ff9800; color:#fff; font-weight:600; border:none; cursor:pointer; padding:7px 14px; border-radius:6px; margin:0; transition:background .2s;}
+    .top-bar button:hover,.tab-btn.active,.tab-btn:hover,input[type="submit"]:hover,.form-section button:hover{ background:#e65100;}
+    .pending-mandals{ color:#e53935; font-size:.98rem; margin-left:18px;}
+    .tabs{ display:flex; flex-wrap:wrap; gap:4px; margin:10px 0 8px; justify-content:center;}
+    .tab-btn{ padding:7px 20px; border-radius:8px 8px 0 0; border-bottom:2px solid transparent; background:#ffe0b2; color:#8d4700; font-weight:600; font-size:1.02rem;}
+    .tab-btn.active{ background:#ff9800; color:#fff; border-bottom:2px solid #ff9800;}
+    .tab-content{ display:none;}
+    .tab-content.active{ display:block;}
+    .search-bar{ margin:8px 0 12px; text-align:center;}
+    .search-bar input{ font-size:1rem; padding:6px 12px; border-radius:6px; border:1.2px solid #ffa726a9; background:#fffaf5; color:#442300; width:50%; max-width:400px;}
+
+    table{ width:100%; border-collapse:collapse; margin-bottom:1.2rem; background:#fff; box-shadow:0 1px 8px #ffa72611; font-size:.99rem;}
+    th,td{ border:1px solid #ffa72655; padding:8px 9px; text-align:left; vertical-align:middle;}
+    th{ background:#ffb74d; color:#442300; font-weight:bold;}
+    tr:nth-child(even){ background:#fff3e0;}
+
+    .action-btn{ padding:4px 10px; border-radius:6px; font-size:1.11rem; margin:0 1px; background:#ff9800; color:#fff; border:none; cursor:pointer; transition:background .18s; min-width:34px;}
+    .action-btn.delete{ background:#e53935;}
+    .action-btn.delete:hover{ background:#b71c1c;}
+    .action-btn:hover{ background:#e65100;}
+
+    .report-photos-grid{ display:grid; grid-template-columns:repeat(3,74px); grid-auto-rows:74px; gap:6px; max-width:220px;}
+    .report-photos-grid img{ width:72px; height:72px; object-fit:cover; border-radius:6px; border:1.5px solid #ff9800; cursor:zoom-in; background:#fff7e0;}
+
+    #imgZoomModal{ display:none; position:fixed; z-index:2000; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,.82); align-items:center; justify-content:center;}
+    #imgZoomModal img{ max-width:95vw; max-height:93vh; border-radius:14px; border:4px solid #fff; box-shadow:0 0 12px #ff980099; background:#fff;}
+
+    .form-section{ padding:16px; background:#fffaf5; border-radius:8px; margin-bottom:20px; border:1px solid #ffe0b2;}
+    .form-section input[type="text"]{ font-size:1rem; padding:6px 12px; border-radius:6px; border:1.2px solid #ffa726a9; background:#fff; color:#442300; margin-right:8px;}
+
+    .toggle-switch{ position:relative; display:inline-block; width:50px; height:24px;}
+    .toggle-switch input{ opacity:0; width:0; height:0;}
+    .slider{ position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#ccc; transition:.4s; border-radius:24px;}
+    .slider:before{ position:absolute; content:""; height:18px; width:18px; left:3px; bottom:3px; background-color:white; transition:.4s; border-radius:50%;}
+    input:checked + .slider{ background-color:#4CAF50;}
+    input:checked + .slider:before{ transform:translateX(26px);}
+
+    .pagination-controls{ text-align:center; margin-top:10px;}
+    .pagination-controls button{ margin:0 5px; padding:5px 10px;}
+
+    /* HIDDEN EXPORT DOC (REPORTS) */
+    #exportDocRoot{ position:fixed; left:-99999px; top:-99999px; width:1100px; background:#fff; padding:16px;}
+    #exportDocRoot .header{ text-align:center; margin-bottom:12px;}
+    #exportDocRoot h1{ font-size:28px; margin:0; font-weight:700; text-decoration:underline;}
+    #exportDocRoot h2{ font-size:22px; margin:6px 0 0; font-weight:600;}
+    #exportDocRoot table{ width:100%; border-collapse:collapse; font-size:13px;}
+    #exportDocRoot th,#exportDocRoot td{ border:1px solid #ccc; padding:6px; vertical-align:top;}
+    #exportDocRoot th{ background:#f4f4f4;}
+    #exportDocRoot .photos{ display:grid; grid-template-columns:repeat(5,64px); grid-auto-rows:64px; gap:4px;}
+    #exportDocRoot .photos img{ width:62px; height:62px; object-fit:cover; border:1px solid #ddd; border-radius:4px;}
+    @media print{ #exportDocRoot{ position:static; width:auto; } }
+
+    @media (max-width:650px){
+      .container{ max-width:99vw; padding:4vw 1vw;}
+      .top-bar{ flex-direction:column; align-items:stretch; gap:7px;}
+      .tabs{ flex-direction:column; gap:1px;}
+      .search-bar input{ width:90%;}
+      table,th,td{ font-size:.94rem; padding:5px;}
+      .report-photos-grid{ grid-template-columns:repeat(3,48px); grid-auto-rows:48px; max-width:130px;}
+      .report-photos-grid img{ width:46px; height:46px;}
+    }
+  </style>
+
+  <!-- Export libs -->
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div id="pdfHeader">
+      <h1>भारतीय जनता पार्टी जिला मंदसौर</h1>
+      <h2 id="eventTitle">सभी कार्यक्रम</h2>
+    </div>
+
+    <h1 class="pageTitle">डैशबोर्ड</h1>
+
+    <div class="top-bar">
+      <div class="left">
+        <label for="filterEvent">कार्यक्रम:</label>
+        <select id="filterEvent"><option value="">सभी कार्यक्रम</option></select>
+        <label for="filterMandal">मंडल:</label>
+        <select id="filterMandal"><option value="">सभी मंडल</option></select>
+        <span id="pendingMandals" class="pending-mandals"></span>
+      </div>
+      <div class="right">
+        <select id="exportDropdown" style="min-width:220px">
+          <option value="">डेटा एक्सपोर्ट...</option>
+          <optgroup label="रिपोर्ट सूची (चुने हुए कार्यक्रम की पूरी)">
+            <option value="reports-pdf">PDF (फोटो सहित)</option>
+            <option value="reports-excel">Excel</option>
+            <option value="reports-jpg">JPG</option>
+          </optgroup>
+          <optgroup label="कार्यक्रम सूची (स्क्रीन जैसा)">
+            <option value="events-pdf">PDF</option>
+            <option value="events-excel">Excel</option>
+            <option value="events-jpg">JPG</option>
+          </optgroup>
+          <optgroup label="संयोजक सूची (स्क्रीन जैसा)">
+            <option value="coordinators-pdf">PDF</option>
+            <option value="coordinators-excel">Excel</option>
+            <option value="coordinators-jpg">JPG</option>
+          </optgroup>
+        </select>
+        <label style="display:inline-flex;align-items:center;gap:6px;margin-left:6px;">
+          <input type="checkbox" id="fastMode" checked> तेज़ मोड
+        </label>
+        <label style="display:inline-flex;align-items:center;gap:6px;margin-left:6px;">
+          <input type="checkbox" id="landscapeMode" checked> PDF लैंडस्केप
+        </label>
+        <button onclick="handleExport()">डाउनलोड</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" id="reportTabBtn" onclick="switchTab('reportsTab')">रिपोर्ट सूची</button>
+      <button class="tab-btn" id="eventTabBtn" onclick="switchTab('eventsTab')">कार्यक्रम सूची</button>
+      <button class="tab-btn" id="coordinatorTabBtn" onclick="switchTab('coordinatorsTab')">संयोजक सूची</button>
+      <button class="tab-btn" id="settingsTabBtn" onclick="switchTab('settingsTab')">कार्यक्रम प्रबंधन</button>
+    </div>
+
+    <!-- ===== Settings ===== -->
+    <div class="tab-content" id="settingsTab">
+      <h2>कार्यक्रम प्रबंधन</h2>
+      <div class="form-section">
+        <input type="text" id="newEventName" placeholder="नया कार्यक्रम नाम" style="width:240px;">
+        <button onclick="addEventName()">नया कार्यक्रम जोड़ें</button>
+      </div>
+      <table>
+        <thead><tr><th>कार्यक्रम का नाम</th><th>फॉर्म में दिखाएँ</th><th>एक्शन</th></tr></thead>
+        <tbody id="eventSettingsList"></tbody>
+      </table>
+      <div id="settingsPagination" class="pagination-controls"></div>
+    </div>
+
+    <!-- ===== Events ===== -->
+    <div class="tab-content" id="eventsTab">
+      <div class="search-bar"><input type="text" id="eventSearch" onkeyup="loadEvents()" placeholder="कार्यक्रम, मंडल या स्थान से खोजें..."></div>
+      <table>
+        <thead><tr><th>कार्यक्रम</th><th>मंडल</th><th>तारीख</th><th>समय</th><th>स्थान</th><th>एक्शन</th></tr></thead>
+        <tbody id="eventList"></tbody>
+      </table>
+      <div id="eventPagination" class="pagination-controls"></div>
+    </div>
+
+    <!-- ===== Coordinators ===== -->
+    <div class="tab-content" id="coordinatorsTab">
+      <div class="search-bar"><input type="text" id="coordinatorSearch" onkeyup="loadCoordinators()" placeholder="नाम, मंडल या मोबाइल नंबर से खोजें..."></div>
+      <table>
+        <thead><tr><th>कार्यक्रम</th><th>मंडल</th><th>संयोजक</th><th>मोबाइल</th><th>सह-संयोजक 1</th><th>मोबाइल 1</th><th>सह-संयोजक 2</th><th>मोबाइल 2</th><th>एक्शन</th></tr></thead>
+        <tbody id="coordinatorList"></tbody>
+      </table>
+      <div id="coordPagination" class="pagination-controls"></div>
+    </div>
+
+    <!-- ===== Reports (UI) ===== -->
+    <div class="tab-content active" id="reportsTab">
+      <div class="search-bar"><input type="text" id="reportSearch" onkeyup="loadReports()" placeholder="मंडल, स्थान, अतिथि या विवरण से खोजें..."></div>
+      <table>
+        <thead><tr><th>कार्यक्रम</th><th>मंडल</th><th>स्थान</th><th>तारीख</th><th>उपस्थिति</th><th>विशिष्ट अतिथि</th><th>विवरण</th><th>फोटो</th><th>एक्शन</th></tr></thead>
+        <tbody id="reportList"></tbody>
+      </table>
+      <div id="reportPagination" class="pagination-controls"></div>
+    </div>
+  </div>
+
+  <!-- HIDDEN EXPORT ROOT -->
+  <div id="exportDocRoot" style="display:none;"></div>
+
+  <div id="imgZoomModal"><img id="imgZoomModalImg" src=""></div>
+
+  <!-- ============== Firebase + App JS ============== -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getFirestore, collection, getDocs, doc, deleteDoc, addDoc, updateDoc, getDoc, query, where, writeBatch } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCI1EL8iFVJnOWbd58Bq5JrJg_IgZuCvA0",
+      authDomain: "mandaleventall.firebaseapp.com",
+      projectId: "mandaleventall",
+      storageBucket: "mandaleventall.firebasestorage.app",
+      messagingSenderId: "900190130114",
+      appId: "1:900190130114:web:bc7d9e2283b3ac57bc505b",
+      measurementId: "G-2BBZZNRS88"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const mandals = ["भेंसोदा","भानपुरा","गरोठ","मेलखेडा","खड़ावदा","शामगढ़","सुवासरा","बसाई","सीतामऊ","क्यामपुर","सीतामऊ ग्रामीण","गुर्जर बरडिया","धुंधधड़का","बुढा","पिपलिया मंडी","मल्हारगढ़","दलोदा","मगरामाता जी","मंदसौर ग्रामीण","मंदसौर उत्तर","मंदसौर दक्षिण"];
+
+    const eventNameMap = {};
+    let activeEventIds = new Set();
+    let eventPage = 1, coordPage = 1, reportPage = 1, settingsPage = 1;
+    const PAGE_SIZE = 15;
+
+    const TELEGRAM_BOT_TOKEN = "8064306737:AAFvXvc3vIT1kyccGiPbpYGCAr9dgKJcRzw";
+    const TELEGRAM_CHAT_ID = "733804072";
+    let lastPendingKey = "";
+
+    async function sendTelegramAlert(message) {
+      try {
+        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: "Markdown" })
+        });
+      } catch (err) { console.error("टेलीग्राम अलर्ट नहीं भेजा जा सका:", err); }
+    }
+
+    async function loadEventNames({ preserveSelection = true } = {}) {
+      const filterEvent = document.getElementById('filterEvent');
+      const previousValue = preserveSelection ? filterEvent.value : "";
+
+      const allEventsSnap = await getDocs(collection(db, "eventNames"));
+      const allEvents = allEventsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      allEvents.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'hi'));
+
+      eventNameMap[""] = 'Unknown';
+      activeEventIds.clear();
+      filterEvent.innerHTML = `<option value="">सभी कार्यक्रम</option>`;
+
+      allEvents.forEach(event => {
+        eventNameMap[event.id] = event.name || 'Unknown';
+        if (event.isActive) {
+          activeEventIds.add(event.id);
+          const option = document.createElement('option');
+          option.value = event.id;
+          option.textContent = event.name;
+          filterEvent.appendChild(option);
+        }
+      });
+
+      if (preserveSelection) filterEvent.value = previousValue;
+
+      const sel = document.getElementById('filterEvent');
+      const txt = sel.options[sel.selectedIndex]?.text?.trim() || "सभी कार्यक्रम";
+      document.getElementById('eventTitle').innerText = sel.value ? txt : "सभी कार्यक्रम";
+
+      await loadEventSettings();
+    }
+
+    async function loadEventSettings() {
+      const eventSettingsList = document.getElementById('eventSettingsList');
+      eventSettingsList.innerHTML = '';
+      document.getElementById('settingsPagination').innerHTML = '';
+      const snap = await getDocs(collection(db, "eventNames"));
+      const sortedDocs = snap.docs.sort((a, b) => (a.data().name || '').localeCompare(b.data().name || '', 'hi'));
+
+      const totalPages = Math.max(1, Math.ceil(sortedDocs.length / PAGE_SIZE));
+      settingsPage = Math.min(settingsPage || 1, totalPages);
+      const pageEvents = sortedDocs.slice((settingsPage - 1) * PAGE_SIZE, settingsPage * PAGE_SIZE);
+
+      for (const docSnap of pageEvents) {
+        const data = docSnap.data();
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${data.name}</td>
+          <td>
+            <label class="toggle-switch">
+              <input type="checkbox" onchange="toggleEventVisibility('${docSnap.id}', this.checked)" ${data.isActive ? 'checked' : ''}>
+              <span class="slider"></span>
+            </label>
+          </td>
+          <td>
+            <button class="action-btn" onclick="editEventNamePrompt('${docSnap.id}')" title="नाम बदलें">✏️</button>
+            <button class="action-btn delete" onclick="deleteEventName('${docSnap.id}')" title="हटाएं">🗑️</button>
+          </td>
+        `;
+        eventSettingsList.appendChild(row);
+      }
+      document.getElementById('settingsPagination').innerHTML = `<button onclick="changeSettingsPage(-1)" ${settingsPage===1?'disabled':''}>पिछला</button> ${settingsPage}/${totalPages} <button onclick="changeSettingsPage(1)" ${settingsPage===totalPages?'disabled':''}>अगला</button>`;
+    }
+
+    window.changeSettingsPage = function(diff) { settingsPage = Math.max(1, settingsPage + diff); loadEventSettings(); };
+
+    window.toggleEventVisibility = async function(eventNameId, isVisible) {
+      await updateDoc(doc(db, "eventNames", eventNameId), { isActive: isVisible });
+      await loadEventNames({ preserveSelection: true });
+      await loadListsOnly();
+    };
+
+    window.addEventName = async function() {
+      const newEventName = document.getElementById('newEventName').value.trim();
+      if (!newEventName) return alert('कार्यक्रम नाम लिखिए!');
+      await addDoc(collection(db, "eventNames"), { name: newEventName, isActive: true });
+      document.getElementById('newEventName').value = '';
+      await loadEventNames({ preserveSelection: true });
+    };
+
+    window.editEventNamePrompt = async function(eventNameId) {
+      const current = eventNameMap[eventNameId] || '';
+      const updated = prompt("नया कार्यक्रम नाम लिखें:", current);
+      if (updated && updated.trim() && updated !== current) {
+        await updateDoc(doc(db, "eventNames", eventNameId), { name: updated.trim() });
+        await loadEventNames({ preserveSelection: true });
+        await loadListsOnly();
+      }
+    };
+
+    window.deleteEventName = async function(eventNameId) {
+      if (!confirm("क्या आप वाकई इस कार्यक्रम को हटाना चाहते हैं? इससे जुड़े सभी संयोजक, रिपोर्ट और कार्यक्रम की जानकारी स्थायी रूप से हट जाएगी!")) return;
+
+      try {
+        const batch = writeBatch(db);
+        const coordinatorsRef = collection(db, `eventNames/${eventNameId}/coordinators`);
+        const reportsRef = collection(db, `eventNames/${eventNameId}/reports`);
+        const coordinatorsSnap = await getDocs(coordinatorsRef);
+        const reportsSnap = await getDocs(reportsRef);
+        coordinatorsSnap.forEach(doc => batch.delete(doc.ref));
+        reportsSnap.forEach(doc => batch.delete(doc.ref));
+
+        const eventsQuery = query(collection(db, "events"), where("eventNameId", "==", eventNameId));
+        const eventsSnap = await getDocs(eventsQuery);
+        eventsSnap.forEach(doc => batch.delete(doc.ref));
+
+        batch.delete(doc(db, "eventNames", eventNameId));
+        await batch.commit();
+
+        alert("कार्यक्रम और उससे जुड़ा सारा डेटा सफलतापूर्वक हटा दिया गया है।");
+        document.getElementById('filterEvent').value = '';
+        await loadEventNames({ preserveSelection: false });
+        await loadListsOnly();
+      } catch (error) {
+        console.error("Error deleting event data: ", error);
+        alert("डेटा हटाने में त्रुटि हुई। विवरण के लिए कंसोल देखें।");
+      }
+    };
+
+    const filterMandal = document.getElementById('filterMandal');
+    mandals.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m;
+      opt.textContent = m;
+      filterMandal.appendChild(opt);
+    });
+
+    document.getElementById('filterEvent').addEventListener('change', function () {
+      const txt = this.options[this.selectedIndex]?.text?.trim() || "सभी कार्यक्रम";
+      document.getElementById('eventTitle').innerText = this.value ? txt : "सभी कार्यक्रम";
+      eventPage = 1; coordPage = 1; reportPage = 1; loadListsOnly();
+    });
+
+    document.getElementById('filterMandal').addEventListener('change', function(){eventPage=1;coordPage=1;reportPage=1;loadListsOnly();});
+
+    window.switchTab = function(tabId) {
+      ['eventsTab','coordinatorsTab','reportsTab','settingsTab'].forEach(id => document.getElementById(id).classList.remove('active'));
+      ['eventTabBtn','coordinatorTabBtn','reportTabBtn','settingsTabBtn'].forEach(id=>document.getElementById(id).classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      document.getElementById(tabId.replace('Tab','TabBtn')).classList.add('active');
+    };
+
+    /* ===== UI Lists ===== */
+    window.loadEvents = async function() {
+      const eventList = document.getElementById('eventList');
+      eventList.innerHTML = ''; document.getElementById('eventPagination').innerHTML = '';
+      const filterEventId = document.getElementById('filterEvent').value;
+      const filterMandalVal = document.getElementById('filterMandal').value;
+      const searchTerm = document.getElementById('eventSearch')?.value.toLowerCase() || '';
+
+      const eventsSnap = await getDocs(collection(db, "events"));
+      let filtered = [];
+      for (const docSnap of eventsSnap.docs) {
+        const event = docSnap.data();
+        if (!activeEventIds.has(event.eventNameId)) continue;
+
+        const eventName = eventNameMap[event.eventNameId] || '';
+        if (filterEventId && event.eventNameId !== filterEventId) continue;
+        if (filterMandalVal && event.mandal !== filterMandalVal) continue;
+
+        const searchableText = `${eventName} ${event.mandal || ''} ${event.location || ''}`.toLowerCase();
+        if (searchTerm && !searchableText.includes(searchTerm)) continue;
+        filtered.push({id: docSnap.id, ...event, eventName});
+      }
+
+      const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+      eventPage = Math.min(eventPage || 1, totalPages);
+      const pageEvents = filtered.slice((eventPage - 1) * PAGE_SIZE, eventPage * PAGE_SIZE);
+
+      for (const event of pageEvents) {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${event.eventName}</td><td>${event.mandal || '-'}</td><td>${event.date || '-'}</td><td>${event.time || '-'}</td><td>${event.location || '-'}</td><td><button class="action-btn" onclick="editEvent('${event.id}')">✏️</button><button class="action-btn delete" onclick="deleteEvent('${event.id}')">🗑️</button></td>`;
+        eventList.appendChild(row);
+      }
+      document.getElementById('eventPagination').innerHTML = `<button onclick="changeEventPage(-1)" ${eventPage===1?'disabled':''}>पिछला</button> ${eventPage}/${totalPages} <button onclick="changeEventPage(1)" ${eventPage===totalPages?'disabled':''}>अगला</button>`;
+    };
+
+    window.loadCoordinators = async function() {
+      const coordinatorList = document.getElementById('coordinatorList');
+      coordinatorList.innerHTML = ''; document.getElementById('coordPagination').innerHTML = '';
+      const filterEventId = document.getElementById('filterEvent').value;
+      const filterMandalVal = document.getElementById('filterMandal').value;
+      const searchTerm = document.getElementById('coordinatorSearch')?.value.toLowerCase() || '';
+
+      let filtered = [];
+      const eventNamesSnap = await getDocs(collection(db, "eventNames"));
+      for (const eventNameDoc of eventNamesSnap.docs) {
+        const eventNameId = eventNameDoc.id;
+        if (!activeEventIds.has(eventNameId)) continue;
+        if (filterEventId && eventNameId !== filterEventId) continue;
+
+        const eventName = eventNameDoc.data().name || '';
+        const coordsSnap = await getDocs(collection(db, `eventNames/${eventNameId}/coordinators`));
+        for (const docSnap of coordsSnap.docs) {
+          const c = docSnap.data();
+          if (filterMandalVal && c.mandal !== filterMandalVal) continue;
+          const searchableText = `${eventName} ${c.mandal || ''} ${c.name || ''} ${c.mobile || ''} ${c.coCoordName1 || ''} ${c.coCoordMobile1 || ''} ${c.coCoordName2 || ''} ${c.coCoordMobile2 || ''}`.toLowerCase();
+          if (searchTerm && !searchableText.includes(searchTerm)) continue;
+          filtered.push({id: docSnap.id, eventNameId, eventName, ...c});
+        }
+      }
+
+      const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+      coordPage = Math.min(coordPage || 1, totalPages);
+      const pageCoords = filtered.slice((coordPage - 1) * PAGE_SIZE, coordPage * PAGE_SIZE);
+
+      for (const c of pageCoords) {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${c.eventName}</td><td>${c.mandal || '-'}</td><td>${c.name || '-'}</td><td>${c.mobile || '-'}</td><td>${c.coCoordName1 || '-'}</td><td>${c.coCoordMobile1 || '-'}</td><td>${c.coCoordName2 || '-'}</td><td>${c.coCoordMobile2 || '-'}</td><td><button class="action-btn" onclick="editCoordinator('${c.eventNameId}','${c.id}')">✏️</button><button class="action-btn delete" onclick="deleteCoordinator('${c.eventNameId}','${c.id}')">🗑️</button></td>`;
+        coordinatorList.appendChild(row);
+      }
+      document.getElementById('coordPagination').innerHTML = `<button onclick="changeCoordPage(-1)" ${coordPage===1?'disabled':''}>पिछला</button> ${coordPage}/${totalPages} <button onclick="changeCoordPage(1)" ${coordPage===totalPages?'disabled':''}>अगला</button>`;
+    };
+
+    window.loadReports = async function() {
+      const reportList = document.getElementById('reportList');
+      reportList.innerHTML = ''; document.getElementById('reportPagination').innerHTML = '';
+      const filterEventId = document.getElementById('filterEvent').value;
+      const filterMandalVal = document.getElementById('filterMandal').value;
+      const searchTerm = document.getElementById('reportSearch')?.value.toLowerCase() || '';
+
+      let allReports = [];
+      const eventNamesSnap = await getDocs(collection(db, "eventNames"));
+      for (const eventNameDoc of eventNamesSnap.docs) {
+        const eventNameId = eventNameDoc.id;
+        if (!activeEventIds.has(eventNameId)) continue;
+
+        const eventName = eventNameDoc.data().name || '';
+        const reportsSnap = await getDocs(collection(db, `eventNames/${eventNameId}/reports`));
+        for (const docSnap of reportsSnap.docs) {
+          allReports.push({id: docSnap.id, eventNameId, name: eventName, ...docSnap.data()});
+        }
+      }
+
+      let filtered = allReports.filter(r => {
+        if (filterEventId && r.eventNameId !== filterEventId) return false;
+        if (filterMandalVal && r.mandal !== filterMandalVal) return false;
+        const searchableText = `${r.name} ${r.mandal || ''} ${r.location || ''} ${r.guests || ''} ${r.details || ''}`.toLowerCase();
+        if (searchTerm && !searchableText.includes(searchTerm)) return false;
+        return true;
+      });
+
+      const reportedMandals = new Set(allReports.filter(r => filterEventId ? r.eventNameId === filterEventId : true).map(r => r.mandal));
+      let pendingMandals = mandals.filter(m => !reportedMandals.has(m));
+      const pendingText = pendingMandals.length ? `रिपोर्ट नहीं: ${pendingMandals.join(", ")}` : 'सभी मंडलों से रिपोर्ट प्राप्त।';
+      document.getElementById('pendingMandals').innerText = (filterEventId && pendingMandals.length) ? pendingText : '';
+
+      const currentKey = `${filterEventId}-${pendingMandals.join("|")}`;
+      if (filterEventId && currentKey !== lastPendingKey) {
+        lastPendingKey = currentKey;
+        await sendTelegramAlert(
+          pendingMandals.length
+            ? `🔔 *${eventNameMap[filterEventId]}*: ${pendingMandals.length} मंडल शेष - ${pendingMandals.join(", ")}`
+            : `✅ *${eventNameMap[filterEventId]}*: सभी मंडलों की रिपोर्ट प्राप्त।`
+        );
+      }
+
+      const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+      reportPage = Math.min(reportPage || 1, totalPages);
+      const pageReports = filtered.slice((reportPage - 1) * PAGE_SIZE, reportPage * PAGE_SIZE);
+
+      for (const r of pageReports) {
+        let photosHTML = "";
+        if (Array.isArray(r.photos) && r.photos.length > 0) {
+          photosHTML = `<div class="report-photos-grid">${r.photos.slice(0,6).map(url => `<img src="${url}" onclick="zoomImage(event, '${url}')">`).join('')}</div>`;
+        }
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${r.name}</td><td>${r.mandal || '-'}</td><td>${r.location || '-'}</td><td>${r.date || '-'}</td><td>${r.attendance || '-'}</td><td>${r.guests || '-'}</td><td>${r.details || '-'}</td><td>${photosHTML}</td><td><button class="action-btn" onclick="editReport('${r.eventNameId}','${r.id}')">✏️</button><button class="action-btn delete" onclick="deleteReport('${r.eventNameId}','${r.id}')">🗑️</button></td>`;
+        reportList.appendChild(row);
+      }
+      document.getElementById('reportPagination').innerHTML = `<button onclick="changeReportPage(-1)" ${reportPage===1?'disabled':''}>पिछला</button> ${reportPage}/${totalPages} <button onclick="changeReportPage(1)" ${reportPage===totalPages?'disabled':''}>अगला</button>`;
+    };
+
+    window.changeEventPage = function(diff) { eventPage = Math.max(1, eventPage + diff); loadEvents(); };
+    window.changeCoordPage = function(diff) { coordPage = Math.max(1, coordPage + diff); loadCoordinators(); };
+    window.changeReportPage = function(diff) { reportPage = Math.max(1, reportPage + diff); loadReports(); };
+
+    window.editEvent = async function(id){ const docSnap = await getDoc(doc(db,"events",id)); if(!docSnap.exists()) return alert("डेटा नहीं मिला!"); const e=docSnap.data(); const m=prompt("मंडल:",e.mandal||""); if(m===null)return; const d=prompt("तारीख:",e.date||""); if(d===null)return; const t=prompt("समय:",e.time||""); if(t===null)return; const l=prompt("स्थान:",e.location||""); if(l===null)return; await updateDoc(doc(db,"events",id),{mandal:m,date:d,time:t,location:l}); await loadEvents(); };
+    window.deleteEvent = async function(id){ if(confirm("पक्का डिलीट करना है?")){ await deleteDoc(doc(db,"events",id)); await loadEvents(); } };
+
+    window.editCoordinator = async function(eventNameId,coordId){ const docSnap=await getDoc(doc(db,`eventNames/${eventNameId}/coordinators`,coordId)); if(!docSnap.exists()) return alert("डेटा नहीं मिला!"); const c=docSnap.data(); const m=prompt("मंडल:",c.mandal||""); if(m===null)return; const n=prompt("संयोजक:",c.name||""); if(n===null)return; const mb=prompt("मोबाइल:",c.mobile||""); if(mb===null)return; const n1=prompt("सह-संयोजक 1:",c.coCoordName1||""); if(n1===null)return; const mb1=prompt("मोबाइल 1:",c.coCoordMobile1||""); if(mb1===null)return; const n2=prompt("सह-संयोजक 2:",c.coCoordName2||""); if(n2===null)return; const mb2=prompt("मोबाइल 2:",c.coCoordMobile2||""); if(mb2===null)return; await updateDoc(doc(db,`eventNames/${eventNameId}/coordinators`,coordId),{mandal:m,name:n,mobile:mb,coCoordName1:n1,coCoordMobile1:mb1,coCoordName2:n2,coCoordMobile2:mb2}); await loadCoordinators(); };
+    window.deleteCoordinator = async function(eventNameId,coordId){ if(confirm("पक्का डिलीट करना है?")){ await deleteDoc(doc(db,`eventNames/${eventNameId}/coordinators`,coordId)); await loadCoordinators(); } };
+
+    window.editReport = async function(eventNameId,reportId){ const docSnap=await getDoc(doc(db,`eventNames/${eventNameId}/reports`,reportId)); if(!docSnap.exists()) return alert("डेटा नहीं मिला!"); const r=docSnap.data(); const m=prompt("मंडल:",r.mandal||""); if(m===null)return; const loc=prompt("स्थान:",r.location||""); if(loc===null)return; const d=prompt("तारीख:",r.date||""); if(d===null)return; const a=prompt("उपस्थिति:",r.attendance||""); if(a===null)return; const g=prompt("विशिष्ट अतिथि:",r.guests||""); if(g===null)return; const det=prompt("विवरण:",r.details||""); if(det===null)return; await updateDoc(doc(db,`eventNames/${eventNameId}/reports`,reportId),{mandal:m,location:loc,date:d,attendance:a,guests:g,details:det}); await loadReports(); };
+    window.deleteReport = async function(eventNameId,reportId){ if(confirm("पक्का डिलीट करना है?")){ await deleteDoc(doc(db,`eventNames/${eventNameId}/reports`,reportId)); await loadReports(); } };
+
+    window.zoomImage = function(e,url){ e.preventDefault(); document.getElementById('imgZoomModalImg').src=url; document.getElementById('imgZoomModal').style.display='flex'; };
+    document.getElementById('imgZoomModal').onclick=function(){ this.style.display='none'; document.getElementById('imgZoomModalImg').src=''; };
+
+    async function loadListsOnly(){ await Promise.all([loadEvents(),loadCoordinators(),loadReports()]); }
+    async function loadAll(){ await loadEventNames(); await loadListsOnly(); }
+    loadAll();
+
+    /* --------- DATA-FIRST for Reports ---------- */
+    window.gatherReportsData = async function({onlyForEventId, filterMandalVal, searchTerm}){
+      let all=[]; if(!onlyForEventId) return all;
+      const reportsSnap = await getDocs(collection(db,`eventNames/${onlyForEventId}/reports`));
+      for(const docSnap of reportsSnap.docs){ const r=docSnap.data(); all.push({id:docSnap.id,...r}); }
+      let filtered = all.filter(r=>{
+        if(filterMandalVal && r.mandal!==filterMandalVal) return false;
+        const searchable=`${r.mandal||''} ${r.location||''} ${r.guests||''} ${r.details||''}`.toLowerCase();
+        if(searchTerm && !searchable.includes((searchTerm||'').toLowerCase())) return false;
+        return true;
+      });
+      filtered.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+      return filtered;
+    };
+
+    window.buildReportExportDOM = function({partyHeaderText, eventNameText, rows}){
+      const root=document.getElementById('exportDocRoot');
+      root.innerHTML=''; root.style.display='block';
+
+      const header=document.createElement('div');
+      header.className='header';
+      header.innerHTML=`<h1>${partyHeaderText}</h1><h2>${eventNameText}</h2>`;
+      root.appendChild(header);
+
+      const table=document.createElement('table');
+      table.innerHTML=`
+        <thead>
+          <tr>
+            <th style="width:14%">मंडल</th>
+            <th style="width:14%">स्थान</th>
+            <th style="width:10%">तारीख</th>
+            <th style="width:10%">उपस्थिति</th>
+            <th style="width:18%">विशिष्ट अतिथि</th>
+            <th style="width:24%">विवरण</th>
+            <th style="width:10%">फोटो</th>
+          </tr>
+        </thead>
+        <tbody></tbody>`;
+      const tbody=table.querySelector('tbody');
+
+      rows.forEach(r=>{
+        const tr=document.createElement('tr');
+
+        const tdM=document.createElement('td'); tdM.textContent=r.mandal||'-';
+        const tdL=document.createElement('td'); tdL.textContent=r.location||'-';
+        const tdD=document.createElement('td'); tdD.textContent=r.date||'-';
+        const tdA=document.createElement('td'); tdA.textContent=r.attendance||'-';
+        const tdG=document.createElement('td'); tdG.textContent=r.guests||'-';
+        const tdDe=document.createElement('td'); tdDe.textContent=r.details||'-';
+
+        const tdP=document.createElement('td'); const wrap=document.createElement('div'); wrap.className='photos';
+        if(Array.isArray(r.photos) && r.photos.length){
+          r.photos.slice(0,10).forEach(url=>{
+            const img=document.createElement('img');
+            img.crossOrigin='anonymous';
+            img.referrerPolicy='no-referrer';
+            img.loading='eager';
+            img.decoding='sync';
+            img.src=url;
+            wrap.appendChild(img);
+          });
+        } else { wrap.textContent='-'; }
+        tdP.appendChild(wrap);
+
+        [tdM,tdL,tdD,tdA,tdG,tdDe,tdP].forEach(td=>tr.appendChild(td));
+        tbody.appendChild(tr);
+      });
+
+      root.appendChild(table);
+      return root;
+    };
+  </script>
+
+  <!-- ============== Fast html2canvas + Landscape PDF + Image Inlining ============== -->
+  <script>
+    /* सभी <img> को DataURL में inline करें (CORS-safe) */
+    async function inlineImagesToDataURL(root, { concurrency=6 } = {}){
+      const imgs = Array.from(root.querySelectorAll('img')).filter(img=>img.src);
+      let i=0;
+      async function worker(){
+        while(i<imgs.length){
+          const img = imgs[i++];
+          try{
+            const prox = `https://images.weserv.nl/?url=${encodeURIComponent(img.src)}`;
+            const res = await fetch(prox, { cache:'no-store' });
+            const blob = await res.blob();
+            await new Promise(r=>{
+              const fr=new FileReader();
+              fr.onloadend=()=>{ img.src=fr.result; r(); };
+              fr.readAsDataURL(blob);
+            });
+          }catch(e){ /* ignore this image */ }
+        }
+      }
+      await Promise.all(Array.from({length:Math.min(concurrency, imgs.length)}, worker));
+    }
+
+    async function html2canvasSmart(element, { fast=false } = {}){
+      await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+      if(fast){
+        await Promise.all(Array.from(element.querySelectorAll('img')).map(img=>img.decode?.().catch(()=>{})));
+        return await html2canvas(element,{
+          useCORS:true, allowTaint:true, backgroundColor:"#fff", scale:1.5,
+          windowWidth:element.scrollWidth, windowHeight:element.scrollHeight
+        });
+      }
+      const images=Array.from(element.querySelectorAll('img'));
+      const jobs=images.map(async(img)=>{
+        if(!img.src) return;
+        try{
+          const prox=`https://images.weserv.nl/?url=${encodeURIComponent(img.src)}`;
+          const res=await fetch(prox); const blob=await res.blob();
+          await new Promise(reslv=>{ const fr=new FileReader(); fr.onloadend=()=>{ img.src=fr.result; reslv(); }; fr.readAsDataURL(blob); });
+        }catch(e){}
+      });
+      await Promise.all(jobs);
+      await Promise.all(images.map(img=>img.decode?.().catch(()=>{})));
+      return await html2canvas(element,{
+        useCORS:true, allowTaint:true, backgroundColor:"#fff", scale:2,
+        windowWidth:element.scrollWidth, windowHeight:element.scrollHeight
+      });
+    }
+
+    function exportCanvasToPdfMultiPage(canvas, fileName, { landscape=true, margin=18, jpegQuality=0.85 } = {}){
+      const { jsPDF } = window.jspdf;
+      const pdf=new jsPDF({ orientation:landscape?'landscape':'portrait', unit:'pt', format:'a4' });
+      const pageW=pdf.internal.pageSize.getWidth();
+      const pageH=pdf.internal.pageSize.getHeight();
+      const ratio=(pageW - margin*2)/canvas.width;
+      const sliceH=(pageH - margin*2)/ratio;
+
+      let y=0, page=0;
+      while(y<canvas.height){
+        const cut=document.createElement('canvas');
+        cut.width=canvas.width; cut.height=Math.min(sliceH, canvas.height - y);
+        const ctx=cut.getContext('2d'); ctx.drawImage(canvas,0,-y);
+        const imgData=cut.toDataURL('image/jpeg', jpegQuality);
+        if(page>0) pdf.addPage();
+        pdf.addImage(imgData,'JPEG', margin,margin, pageW-margin*2, cut.height*ratio);
+        y+=sliceH; page++;
+      }
+      pdf.save(`${fileName}.pdf`);
+    }
+
+    function exportTableToExcel(table, title){
+      if(!table) return alert("एक्सेल एक्सपोर्ट के लिए सारणी नहीं मिली!");
+      const rows=Array.from(table.querySelectorAll('tr'));
+      const data=rows.map(row=>Array.from(row.querySelectorAll("th, td"))
+                        .filter(cell=>!cell.querySelector('div.report-photos-grid'))
+                        .map(cell=>cell.innerText));
+      if(data.length<2) return alert("एक्सेल में एक्सपोर्ट करने के लिए कोई डेटा नहीं है!");
+      const ws=XLSX.utils.aoa_to_sheet(data);
+      const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, title);
+      XLSX.writeFile(wb, `${title}.xlsx`);
+    }
+
+    window.handleExport = async function(){
+      try{
+        const value=document.getElementById('exportDropdown').value;
+        if(!value) return alert("कृपया एक्सपोर्ट प्रकार चुनें!");
+        const [category, type]=value.split('-');
+        const fast = document.getElementById('fastMode')?.checked;
+        const landscape = document.getElementById('landscapeMode')?.checked;
+
+        /* ---------- REPORTS: चुने हुए इवेंट की पूरी रिपोर्ट (फोटो सहित) ---------- */
+        if(category==='reports'){
+          const sel=document.getElementById('filterEvent');
+          const eventId=sel.value;
+          const eventText=sel.options[sel.selectedIndex]?.text?.trim();
+          if(!eventId){ alert("कृपया पहले एक कार्यक्रम चुनें।"); return; }
+
+          const mandalFilter=document.getElementById('filterMandal').value || '';
+          const searchTerm=document.getElementById('reportSearch').value || '';
+
+          alert("रिपोर्ट डेटा इकट्ठा किया जा रहा है…");
+
+          const rows=await window.gatherReportsData({ onlyForEventId:eventId, filterMandalVal:mandalFilter, searchTerm });
+          if(!rows.length){ alert("इस चयन के लिए कोई रिपोर्ट नहीं मिली।"); return; }
+
+          const root=window.buildReportExportDOM({
+            partyHeaderText:"भारतीय जनता पार्टी जिला मंदसौर",
+            eventNameText:eventText || "चयनित कार्यक्रम",
+            rows
+          });
+
+          // DOM पेंट + इमेज इनलाइन (CORS-safe)
+          await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+          await inlineImagesToDataURL(root);    // << फोटो को DataURL में बदलना
+          await Promise.all(Array.from(root.querySelectorAll('img')).map(i=>i.decode?.().catch(()=>{})));
+
+          const canvas=await html2canvasSmart(root, { fast });
+          const fileName="रिपोर्ट-सूची";
+
+          if(type==='pdf'){
+            exportCanvasToPdfMultiPage(canvas, fileName, { landscape, margin:18, jpegQuality: fast ? 0.8 : 0.9 });
+          } else if(type==='jpg'){
+            const a=document.createElement('a');
+            a.href=canvas.toDataURL('image/jpeg', fast?0.8:0.9);
+            a.download=`${fileName}.jpg`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          } else if(type==='excel'){
+            exportTableToExcel(root.querySelector('table'), fileName);
+          }
+
+          root.style.display='none'; root.innerHTML='';
+          return;
+        }
+
+        /* ---------- Events/Coordinators: स्क्रीन-जैसा ---------- */
+        let selector='.container', fileName="", table;
+        if(category==='events'){ fileName="कार्यक्रम-सूची"; table=document.querySelector('#eventsTab table'); }
+        else if(category==='coordinators'){ fileName="संयोजक-सूची"; table=document.querySelector('#coordinatorsTab table'); }
+        else { alert("अमान्य एक्सपोर्ट प्रकार।"); return; }
+
+        const sel=document.getElementById('filterEvent');
+        const selectedEventText=sel.options[sel.selectedIndex]?.text?.trim() || "सभी कार्यक्रम";
+        document.getElementById('eventTitle').innerText = sel.value ? selectedEventText : "सभी कार्यक्रम";
+
+        alert("फ़ाइल बनाई जा रही है…");
+
+        if(type==='excel'){
+          exportTableToExcel(table, fileName);
+        } else {
+          const container=document.querySelector(selector);
+          const canvas=await html2canvasSmart(container, { fast });
+          if(type==='pdf'){
+            exportCanvasToPdfMultiPage(canvas, fileName, { landscape, margin:18, jpegQuality: fast ? 0.8 : 0.9 });
+          } else if(type==='jpg'){
+            const a=document.createElement('a');
+            a.href=canvas.toDataURL('image/jpeg', fast?0.8:0.9);
+            a.download=`${fileName}.jpg`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          }
+        }
+      }catch(err){
+        console.error("Export error:", err);
+        alert("फ़ाइल बनाने में त्रुटि हुई। अधिक जानकारी के लिए कंसोल देखें।");
+      }
+    };
+  </script>
+</body>
+</html>

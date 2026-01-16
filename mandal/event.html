@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <title>कार्यक्रम जोड़ें</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { background: #ffedd2; font-family: 'Segoe UI', Arial, sans-serif; }
+        .container { max-width: 450px; margin: 40px auto; background: #ffd89b; border-radius: 16px; box-shadow: 0 2px 16px #ff980044; padding: 36px 22px 28px 22px; }
+        h1 { color: #e65100; text-align: center; margin-bottom: 18px; }
+        .form-group { display: flex; flex-direction: column; margin-bottom: 18px; }
+        label { margin-bottom: 6px; font-weight: 500; color: #b85c00; }
+        input, select, textarea { padding: 11px 10px; border-radius: 6px; border: 1.5px solid #ffc27b; background: #fffdf6; font-size: 1.1rem; outline: none; transition: border 0.2s; }
+        input:focus, select:focus, textarea:focus { border-color: #ff9800; background: #fff7e0; }
+        button, input[type="submit"] { width: 100%; background: #ff9800; color: #fff; border: none; border-radius: 7px; padding: 11px 18px; font-size: 1.13rem; font-weight: bold; cursor: pointer; margin-top: 12px; margin-bottom: 5px; transition: background 0.2s;}
+        button:hover, input[type="submit"]:hover { background: #e65100; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>आप के मंडल में सम्प्पन होने वाले कार्यक्रम /बैठक की जानकारी भरे </h1>
+        <form id="eventForm" autocomplete="off">
+            <div class="form-group">
+                <label for="eventName">कार्यक्रम का नाम</label>
+                <select id="eventName" required>
+                    <option value="">कार्यक्रम का नाम चुनें</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="mandal">मंडल</label>
+                <select id="mandal" required>
+                    <option value="">-- मंडल चुनें --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="eventDate">तारीख</label>
+                <input type="date" id="eventDate" required placeholder="तारीख चुनें">
+            </div>
+            <div class="form-group">
+                <label for="eventTime">समय</label>
+                <input type="time" id="eventTime" required placeholder="समय चुनें">
+            </div>
+            <div class="form-group">
+                <label for="location">स्थान</label>
+                <input type="text" id="location" required placeholder="स्थान">
+            </div>
+            <button type="submit">कार्यक्रम जोड़ें</button>
+        </form>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+        import { getFirestore, collection, addDoc, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCI1EL8iFVJnOWbd58Bq5JrJg_IgZuCvA0",
+            authDomain: "mandaleventall.firebaseapp.com",
+            projectId: "mandaleventall",
+            storageBucket: "mandaleventall.firebasestorage.app",
+            messagingSenderId: "900190130114",
+            appId: "1:900190130114:web:bc7d9e2283b3ac57bc505b",
+            measurementId: "G-2BBZZNRS88"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const mandals = ["भेंसोदा","भानपुरा","गरोठ","मेलखेडा","खड़ावदा","शामगढ़","सुवासरा","बसाई","सीतामऊ","क्यामपुर","सीतामऊ ग्रामीण","गुर्जर बरडिया","धुंधधड़का","बुढा","पिपलिया मंडी","मल्हारगढ़","दलोदा","मगरामाता जी","मंदसौर ग्रामीण","मंदसौर उत्तर","मंदसौर दक्षिण"];
+
+        const TELEGRAM_BOT_TOKEN = "8064306737:AAFvXvc3vIT1kyccGiPbpYGCAr9dgKJcRzw";
+        const TELEGRAM_CHAT_ID   = "733804072";
+        async function sendTelegramAlert(text){
+          try{
+            await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,{
+              method:'POST',headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text })
+            });
+          }catch(e){ console.warn('Telegram error',e); }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const mandalSelect = document.getElementById('mandal');
+            mandals.forEach(m => { const o=document.createElement('option'); o.value=m; o.textContent=m; mandalSelect.appendChild(o); });
+            await loadEventNames();
+        });
+
+        async function loadEventNames() {
+            const sel = document.getElementById('eventName');
+            sel.innerHTML = '<option value="">कार्यक्रम का नाम चुनें</option>';
+            
+            // केवल active कार्यक्रम लोड करने के लिए query बदल दी गई है
+            const eventNamesRef = collection(db, "eventNames");
+            const q = query(eventNamesRef, where("isActive", "==", true));
+            const snap = await getDocs(q);
+
+            const sorted = snap.docs.sort((a,b)=> (a.data().name||'').localeCompare(b.data().name||'','hi'));
+            for(const d of sorted){ const opt=document.createElement('option'); opt.value=d.id; opt.textContent=d.data().name; sel.appendChild(opt); }
+        }
+
+        function showSummaryPopup(data){
+          const summary = Object.entries(data).map(([k,v])=>`<b>${k}</b>: ${v||'-'}`).join('<br>');
+          const wrap = document.createElement('div');
+          wrap.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:5000';
+          wrap.innerHTML = `<div style="background:#fff;max-width:460px;width:92%;padding:18px;border-radius:12px;">
+              <h3 style="margin:0 0 8px 0;">भरी गई जानकारी</h3>
+              <div style="font-size:14px;line-height:1.45">${summary}</div>
+              <div style="margin-top:10px;color:#d35400;font-size:12px;">इसका screenshot लेकर अपने पास रख सकते हैं</div>
+              <div style="text-align:right;margin-top:12px;"><button onclick="this.closest('div').parentElement.remove()">OK</button></div>
+          </div>`;
+          document.body.appendChild(wrap);
+        }
+
+        document.getElementById('eventForm').addEventListener('submit', async (e)=>{
+          e.preventDefault();
+          const selectedEventOption = document.getElementById('eventName').options[document.getElementById('eventName').selectedIndex];
+          const eventNameText = selectedEventOption.text;
+          const data = {
+            eventNameId: selectedEventOption.value,
+            mandal: document.getElementById('mandal').value,
+            date: document.getElementById('eventDate').value,
+            time: document.getElementById('eventTime').value,
+            location: document.getElementById('location').value
+          };
+          try{
+            await addDoc(collection(db,'events'), data);
+            
+            const eventsQuery = query(collection(db, "events"), where("eventNameId", "==", data.eventNameId));
+            const eventsSnap = await getDocs(eventsQuery);
+            const doneSet = new Set(eventsSnap.docs.map(d => d.data().mandal));
+
+            const remaining = mandals.filter(m=> !doneSet.has(m));
+            const alertText = `✅ कार्यक्रम जानकारी: *${eventNameText}*\n\n*मंडल:* ${data.mandal}\n*स्थान:* ${data.location}\n\n*शेष मंडल (${remaining.length}):*\n- ${remaining.join('\n- ')}`;
+            await sendTelegramAlert(alertText);
+
+            if(remaining.length === 0){ await sendTelegramAlert(`🎉 *${eventNameText}* के लिए सभी 21 मंडलों से कार्यक्रम जानकारी प्राप्त हो गई है!`); }
+
+            showSummaryPopup({
+                "कार्यक्रम": eventNameText,
+                ...data
+            });
+            alert('कार्यक्रम जोड़ा गया!');
+            e.target.reset();
+          }catch(err){ alert('Error: '+err.message); }
+        });
+    </script>
+</body>
+</html>
