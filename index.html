@@ -1,366 +1,78 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Super Admin • BJP Digital Cell</title>
-  
-  <!-- Font & Icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BJP Digital Command Center • Mandsaur</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;700;800&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
+  
   <style>
-    :root {
-      --sidebar-width: 260px;
-      --header-height: 60px;
-      --brand: #ff6a00;
-      --brand-dark: #cc5500;
-      --accent: #1F3B73;
-      --bg: #f4f6f9;
-      --text: #333;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Noto Sans Devanagari', sans-serif; background: var(--bg); display: flex; height: 100vh; overflow: hidden; }
-
-    /* Login Screen Overlay */
-    #loginOverlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: linear-gradient(135deg, var(--brand), var(--brand-dark));
-      z-index: 9999; display: flex; align-items: center; justify-content: center;
-      flex-direction: column; color: white;
-    }
-    .login-box {
-      background: white; padding: 30px; border-radius: 12px;
-      text-align: center; width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    }
-    .login-box h2 { color: var(--accent); margin-bottom: 20px; }
-    .login-box input {
-      width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px;
-      margin-bottom: 15px; font-size: 16px; outline: none;
-    }
-    .login-box button {
-      width: 100%; padding: 12px; background: var(--brand); color: white;
-      border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
-    }
-    .login-box button:hover { background: var(--brand-dark); }
-
-    /* Share Links Modal */
-    #shareModal {
-      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6); z-index: 5000; align-items: center; justify-content: center;
-    }
-    .share-box {
-      background: white; width: 90%; max-width: 500px; padding: 25px; border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3); position: relative;
-    }
-    .share-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-    .share-header h3 { margin: 0; color: var(--accent); }
-    .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #666; }
-    
-    .link-item { margin-bottom: 15px; }
-    .link-item label { display: block; font-size: 13px; color: #666; margin-bottom: 5px; font-weight: 600; }
-    .link-input-group { display: flex; gap: 8px; }
-    .link-input-group input { 
-      flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; 
-      background: #f9f9f9; font-size: 13px; color: #333; 
-    }
-    .link-input-group button {
-      padding: 8px 12px; background: var(--accent); color: white; border: none; 
-      border-radius: 6px; cursor: pointer; font-size: 13px; white-space: nowrap;
-    }
-    .link-input-group button:hover { background: #2c4f96; }
-    .link-input-group button.copied { background: #4CAF50; }
-
-    /* Sidebar */
-    .sidebar {
-      width: var(--sidebar-width);
-      background: #1e293b;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
-      transition: all 0.3s;
-    }
-    .logo {
-      height: var(--header-height);
-      display: flex; align-items: center; padding: 0 20px;
-      background: rgba(0,0,0,0.2); font-weight: bold; font-size: 18px;
-      color: var(--brand); letter-spacing: 1px;
-    }
-    .nav-links { flex: 1; padding: 20px 0; overflow-y: auto; }
-    .nav-item {
-      padding: 12px 20px; display: flex; align-items: center; gap: 12px;
-      color: #cbd5e1; text-decoration: none; cursor: pointer;
-      border-left: 4px solid transparent; transition: 0.2s;
-    }
-    .nav-item:hover, .nav-item.active {
-      background: rgba(255, 255, 255, 0.05);
-      color: white; border-left-color: var(--brand);
-    }
-    .nav-header {
-      padding: 15px 20px 5px; font-size: 11px; text-transform: uppercase;
-      color: #64748b; font-weight: bold;
-    }
-
-    /* Main Content */
-    .main { flex: 1; display: flex; flex-direction: column; width: 100%; }
-    
-    .header {
-      height: var(--header-height); background: white;
-      border-bottom: 1px solid #e2e8f0; display: flex; align-items: center;
-      justify-content: space-between; padding: 0 20px;
-    }
-    .header h2 { font-size: 18px; color: var(--accent); }
-    .logout-btn {
-      color: #ef4444; font-weight: 600; cursor: pointer; font-size: 14px;
-      display: flex; align-items: center; gap: 5px;
-    }
-    .share-trigger {
-      background: #eef2ff; color: var(--accent); padding: 6px 12px; border-radius: 20px;
-      font-size: 13px; font-weight: 600; cursor: pointer; margin-right: 15px; border: 1px solid #dbeafe;
-      display: flex; align-items: center; gap: 6px;
-    }
-    .share-trigger:hover { background: #dbeafe; }
-
-    /* Content Frame */
-    .content-area {
-      flex: 1; background: #f1f5f9; padding: 0; position: relative;
-    }
-    iframe {
-      width: 100%; height: 100%; border: none; display: block;
-    }
-    
-    /* Responsive */
-    @media (max-width: 768px) {
-      .sidebar { position: absolute; left: -100%; height: 100%; z-index: 100; }
-      .sidebar.open { left: 0; }
-      .menu-toggle { display: block; cursor: pointer; font-size: 20px; margin-right: 15px; }
-      .header h2 { font-size: 16px; }
-      .share-trigger span { display: none; } /* Hide text on mobile */
-    }
-    @media (min-width: 769px) { .menu-toggle { display: none; } }
+    :root { --brand: #ff6a00; --brand-dark: #cc5500; --accent: #1F3B73; --bg: #fdf8f5; --surface: #ffffff; --text: #333; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Noto Sans Devanagari', sans-serif; background: var(--bg); color: var(--text); }
+    .header { background: linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%); color: white; padding: 20px; text-align: center; box-shadow: 0 4px 12px rgba(255, 106, 0, 0.2); }
+    .header h1 { margin: 0; font-size: 24px; font-weight: 800; }
+    .header p { margin: 5px 0 0; opacity: 0.9; font-size: 14px; }
+    .container { max-width: 1200px; margin: 30px auto; padding: 0 15px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .card { background: var(--surface); border-radius: 16px; padding: 25px; text-align: center; transition: transform 0.2s, box-shadow 0.2s; border: 1px solid #eee; border-bottom: 4px solid transparent; display: flex; flex-direction: column; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .card:hover { transform: translateY(-5px); box-shadow: 0 12px 24px rgba(0,0,0,0.1); }
+    .card.visitor { border-bottom-color: #2196F3; } .card.pravas { border-bottom-color: #4CAF50; } .card.mandal { border-bottom-color: #FF9800; }
+    .icon-box { width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; font-size: 30px; color: white; }
+    .visitor .icon-box { background: linear-gradient(135deg, #2196F3, #1976D2); }
+    .pravas .icon-box { background: linear-gradient(135deg, #4CAF50, #388E3C); }
+    .mandal .icon-box { background: linear-gradient(135deg, #FF9800, #F57C00); }
+    .card h2 { margin: 0 0 10px; font-size: 20px; color: var(--accent); }
+    .card p { margin: 0; color: #666; font-size: 14px; line-height: 1.5; }
+    .btn-group { margin-top: 15px; display: flex; gap: 10px; width: 100%; flex-wrap: wrap; justify-content: center; }
+    .btn { flex: 1; min-width: 100px; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; border: 1px solid #ddd; color: #555; transition: 0.2s; display: inline-block; }
+    .btn:hover { background: #f5f5f5; color: var(--brand); border-color: var(--brand); }
+    .btn.primary { background: var(--accent); color: white; border: none; }
+    .btn.primary:hover { background: #2c4f96; }
+    .footer { text-align: center; margin-top: 40px; padding: 20px; color: #888; font-size: 13px; border-top: 1px solid #eee; }
   </style>
 </head>
 <body>
-
-  <!-- 1. LOGIN OVERLAY -->
-  <div id="loginOverlay">
-    <div style="margin-bottom:20px; font-size:40px; background:white; color:#ff6a00; width:80px; height:80px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.2);">
-        <i class="fa-solid fa-om"></i>
-    </div>
-    <div class="login-box">
-      <h2>Super Admin Login</h2>
-      <input type="password" id="adminPass" placeholder="पासवर्ड डालें (bjp123)">
-      <button onclick="checkLogin()">लॉग इन करें</button>
-      <p id="errorMsg" style="color:red; font-size:12px; margin-top:10px; display:none;">गलत पासवर्ड!</p>
-    </div>
+  <div class="header">
+    <h1>Digital Command Center</h1>
+    <p>भारतीय जनता पार्टी • जिला मंदसौर</p>
   </div>
-
-  <!-- 2. SHARE LINKS MODAL -->
-  <div id="shareModal">
-    <div class="share-box">
-      <div class="share-header">
-        <h3>🔗 पब्लिक फॉर्म लिंक्स (शेयर करें)</h3>
-        <button class="close-btn" onclick="toggleShareModal(false)">&times;</button>
+  <div class="container">
+    <!-- Visitor Module -->
+    <div class="card visitor">
+      <div class="icon-box"><i class="fa-solid fa-users"></i></div>
+      <h2>विज़िटर & ऑफिस</h2>
+      <p>कार्यालय आने वाले आगंतुकों का रिकॉर्ड और फोटो एंट्री।</p>
+      <div class="btn-group">
+        <a href="visitor/index.html" class="btn" target="_blank">एंट्री फॉर्म</a>
+        <a href="visitor/admin.html" class="btn primary">एडमिन पैनल</a>
       </div>
-      <p style="font-size:13px; color:#666; margin-bottom:15px;">नीचे दिए गए लिंक्स को कॉपी करके संबंधित कार्यकर्ताओं या संयोजक को भेजें। ये लिंक्स बिना लॉगिन के खुलेंगे।</p>
-      
-      <div class="link-item">
-        <label>📝 रिपोर्टिंग फॉर्म (मंडल अध्यक्ष के लिए)</label>
-        <div class="link-input-group">
-          <input type="text" id="linkReport" readonly>
-          <button onclick="copyLink('linkReport', this)">Copy</button>
-        </div>
-      </div>
-
-      <div class="link-item">
-        <label>👤 संयोजक फॉर्म (नया संयोजक जोड़ने के लिए)</label>
-        <div class="link-input-group">
-          <input type="text" id="linkCoordinator" readonly>
-          <button onclick="copyLink('linkCoordinator', this)">Copy</button>
-        </div>
-      </div>
-
-      <div class="link-item">
-        <label>🗓️ इवेंट फॉर्म (नया कार्यक्रम जोड़ने के लिए)</label>
-        <div class="link-input-group">
-          <input type="text" id="linkEvent" readonly>
-          <button onclick="copyLink('linkEvent', this)">Copy</button>
-        </div>
-      </div>
-
-      <div class="link-item">
-        <label>🚶‍♂️ विज़िटर एंट्री (रिसेप्शन के लिए)</label>
-        <div class="link-input-group">
-          <input type="text" id="linkVisitor" readonly>
-          <button onclick="copyLink('linkVisitor', this)">Copy</button>
-        </div>
-      </div>
-
     </div>
-  </div>
-
-  <!-- 3. SIDEBAR -->
-  <div class="sidebar" id="sidebar">
-    <div class="logo">
-      <i class="fa-solid fa-landmark" style="margin-right:10px;"></i> BJP DIGITAL
+    <!-- Pravas Module -->
+    <div class="card pravas">
+      <div class="icon-box"><i class="fa-solid fa-route"></i></div>
+      <h2>प्रवास कार्यक्रम</h2>
+      <p>माननीय जिला अध्यक्ष जी के प्रवास कार्यक्रम।</p>
+      <div class="btn-group">
+        <a href="pravas/index.html" class="btn primary">Hub / TV Mode</a>
+        <a href="pravas/karyakram_bulk_pdf_export.html" class="btn">PDF Export</a>
+      </div>
     </div>
-    <div class="nav-links">
-      <div class="nav-header">MAIN</div>
-      <div class="nav-item active" onclick="loadFrame('visitor/admin.html', 'विज़िटर डेटाबेस')">
-        <i class="fa-solid fa-users"></i> विज़िटर डेटाबेस
+    <!-- Mandal Module -->
+    <div class="card mandal">
+      <div class="icon-box"><i class="fa-solid fa-building-flag"></i></div>
+      <h2>मंडल रिपोर्टिंग</h2>
+      <p>21 मंडलों के इवेंट्स की लाइव रिपोर्टिंग।</p>
+      <div class="btn-group">
+        <a href="mandal/report.html" class="btn" target="_blank">📝 रिपोर्ट फॉर्म</a>
+        <a href="mandal/dashboard.html" class="btn primary">📊 डैशबोर्ड</a>
       </div>
-      
-      <div class="nav-header">प्रवास मैनेजमेंट</div>
-      <div class="nav-item" onclick="loadFrame('pravas/index.html', 'प्रवास Hub (PDF/TV)')">
-        <i class="fa-solid fa-tv"></i> प्रवास Hub
-      </div>
-      <div class="nav-item" onclick="loadFrame('pravas/karyakram_bulk_pdf_export.html', 'प्रवास PDF Export')">
-        <i class="fa-solid fa-file-pdf"></i> PDF एक्सपोर्ट
-      </div>
-
-      <div class="nav-header">मंडल रिपोर्टिंग</div>
-      <div class="nav-item" onclick="loadFrame('mandal/dashboard.html', 'मंडल डैशबोर्ड')">
-        <i class="fa-solid fa-chart-pie"></i> मंडल डैशबोर्ड
-      </div>
-      <!-- Internal Admin Forms -->
-      <div class="nav-item" onclick="loadFrame('mandal/event.html', 'नया इवेंट बनाएं')">
-        <i class="fa-solid fa-plus-circle"></i> इवेंट जोड़ें (Admin)
-      </div>
-      <div class="nav-item" onclick="loadFrame('mandal/coordinator.html', 'संयोजक प्रबंधन')">
-        <i class="fa-solid fa-user-tie"></i> संयोजक जोड़ें (Admin)
-      </div>
-
-      <div class="nav-header">Tools</div>
-      <div class="nav-item" onclick="toggleShareModal(true)">
-        <i class="fa-solid fa-share-nodes"></i> <b>लिंक शेयर करें</b>
-      </div>
-      <div class="nav-item" onclick="loadFrame('visitor/importer.html', 'CSV डाटा इम्पोर्ट')">
-        <i class="fa-solid fa-upload"></i> डाटा इम्पोर्ट
-      </div>
-      <div class="nav-item" onclick="window.location.href='index.html'">
-        <i class="fa-solid fa-home"></i> मुख्य वेबसाइट पर जाएँ
+      <div class="btn-group" style="width:100%">
+        <a href="mandal/event.html" class="btn" style="background:#fff3e0;border-color:#ff9800;color:#e65100">➕ इवेंट</a>
+        <a href="mandal/coordinator.html" class="btn" style="background:#fff3e0;border-color:#ff9800;color:#e65100">👤 संयोजक</a>
       </div>
     </div>
   </div>
-
-  <!-- 4. MAIN AREA -->
-  <div class="main">
-    <div class="header">
-      <div style="display:flex; align-items:center;">
-        <i class="fa-solid fa-bars menu-toggle" onclick="toggleSidebar()"></i>
-        <h2 id="pageTitle">विज़िटर डेटाबेस</h2>
-      </div>
-      <div style="display:flex; align-items:center;">
-        <button class="share-trigger" onclick="toggleShareModal(true)">
-          <i class="fa-solid fa-link"></i> <span>Form Links</span>
-        </button>
-        <div class="logout-btn" onclick="logout()">
-          <i class="fa-solid fa-power-off"></i> <span style="margin-left:5px">Log Out</span>
-        </div>
-      </div>
-    </div>
-    
-    <div class="content-area">
-      <!-- Default loads Visitor Admin -->
-      <iframe id="appFrame" src=""></iframe>
-    </div>
-  </div>
-
-  <script>
-    // Security & Logic
-    const PASS = "bjp123"; // Admin Password
-    const overlay = document.getElementById('loginOverlay');
-    const iframe = document.getElementById('appFrame');
-    const pageTitle = document.getElementById('pageTitle');
-    const items = document.querySelectorAll('.nav-item');
-
-    // Check Login
-    function checkLogin() {
-      const inp = document.getElementById('adminPass').value;
-      if (inp === PASS) {
-        overlay.style.display = 'none';
-        sessionStorage.setItem('isLoggedIn', 'true');
-        // Load default page only after login
-        if(!iframe.src || iframe.src === window.location.href) {
-            loadFrame('visitor/admin.html', 'विज़िटर डेटाबेस');
-        }
-      } else {
-        document.getElementById('errorMsg').style.display = 'block';
-      }
-    }
-
-    // Auto-login if session exists
-    if (sessionStorage.getItem('isLoggedIn') === 'true') {
-      overlay.style.display = 'none';
-      loadFrame('visitor/admin.html', 'विज़िटर डेटाबेस');
-    }
-
-    function logout() {
-      sessionStorage.removeItem('isLoggedIn');
-      location.reload();
-    }
-
-    function loadFrame(url, title) {
-      // Remove active class from all
-      items.forEach(i => i.classList.remove('active'));
-      // Add active class to clicked
-      event.currentTarget.classList.add('active');
-      
-      iframe.src = url;
-      pageTitle.textContent = title;
-      
-      // On mobile, close sidebar after click
-      if(window.innerWidth <= 768) {
-        document.getElementById('sidebar').classList.remove('open');
-      }
-    }
-
-    function toggleSidebar() {
-      document.getElementById('sidebar').classList.toggle('open');
-    }
-
-    // --- SHARE LINK LOGIC ---
-    function toggleShareModal(show) {
-      const modal = document.getElementById('shareModal');
-      modal.style.display = show ? 'flex' : 'none';
-      if(show) generateLinks();
-    }
-
-    function generateLinks() {
-      // Get base URL (e.g., https://username.github.io/repo/ OR http://127.0.0.1:5500/)
-      // We assume super_admin.html is in the root along with visitor/, mandal/ folders
-      const basePath = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-
-      document.getElementById('linkReport').value = basePath + 'mandal/report.html';
-      document.getElementById('linkCoordinator').value = basePath + 'mandal/coordinator.html';
-      document.getElementById('linkEvent').value = basePath + 'mandal/event.html';
-      document.getElementById('linkVisitor').value = basePath + 'visitor/index.html';
-    }
-
-    function copyLink(inputId, btn) {
-      const input = document.getElementById(inputId);
-      input.select();
-      input.setSelectionRange(0, 99999); // For mobile
-      navigator.clipboard.writeText(input.value).then(() => {
-        const originalText = btn.textContent;
-        btn.textContent = "Copied!";
-        btn.classList.add('copied');
-        setTimeout(() => {
-          btn.textContent = originalText;
-          btn.classList.remove('copied');
-        }, 2000);
-      });
-    }
-
-    // Handle click outside modal
-    window.onclick = function(event) {
-      const modal = document.getElementById('shareModal');
-      if (event.target == modal) {
-        toggleShareModal(false);
-      }
-    }
-  </script>
+  <div class="footer">Developed for BJP Mandsaur • IT Cell<br><a href="super_admin.html" style="color:#aaa;text-decoration:none">Super Admin Login</a></div>
 </body>
 </html>
