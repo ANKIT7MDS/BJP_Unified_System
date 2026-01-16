@@ -4,308 +4,151 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>आगंतुक पंजीयन • BJP Office</title>
-
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: linear-gradient(135deg, #ff6a00, #ffa41b);
-      font-family: 'Noto Sans Devanagari', sans-serif;
-      display: flex; justify-content: center; padding: 20px 0;
-    }
-    .container {
-      background: #fff8ef; width: 100%; max-width: 600px;
-      border-radius: 12px; padding: 30px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-    }
+    body { background: linear-gradient(135deg, #ff6a00, #ffa41b); font-family: 'Noto Sans Devanagari', sans-serif; display: flex; justify-content: center; padding: 20px 0; }
+    .container { background: #fff8ef; width: 100%; max-width: 600px; border-radius: 12px; padding: 30px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
     h2 { text-align: center; color: #ff6a00; margin-bottom: 20px; }
-    label { display: block; margin-top: 15px; margin-bottom: 5px; font-weight: 800; color: #5a2d0c; }
-    input[type="text"], input[type="tel"], select {
-      width: 100%; padding: 10px 14px; border: 2px solid #ffcf99;
-      border-radius: 10px; font-size: 16px; background: #fff; outline: none;
-    }
-    input:focus, select:focus { border-color: #ff8a33; box-shadow: 0 0 0 3px rgba(255,138,51,.2); }
-    button, input[type="button"] {
-      width: 100%; padding: 12px; background-color: #ff6a00; color: white;
-      font-size: 16px; font-weight: 800; border: none; border-radius: 10px;
-      cursor: pointer; margin-top: 16px;
-    }
-    button:hover { background-color: #e55f00; }
-    button[disabled] { opacity: 0.6; cursor: not-allowed; }
-    .row { display:flex; align-items:center; gap:8px; }
-    video, canvas { width: 100%; max-height: 300px; margin: 10px 0; border-radius: 10px; background: #000; }
-    small.help { color:#7a4a1f }
+    label { display: block; margin-top: 15px; margin-bottom: 5px; font-weight: bold; color: #333; }
+    input, select { width: 100%; padding: 12px; border: 2px solid #ffccbc; border-radius: 8px; font-size: 16px; outline: none; background: #fff; }
+    input:focus, select:focus { border-color: #ff6a00; box-shadow: 0 0 5px rgba(255,106,0,0.3); }
+    button { width: 100%; padding: 14px; background: #ff6a00; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 25px; transition: background 0.3s; }
+    button:hover { background: #e65100; }
+    #camera-area { margin-top: 20px; text-align: center; display: none; }
+    video, canvas { width: 100%; max-width: 300px; border-radius: 8px; border: 2px solid #ff6a00; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 </head>
 <body>
   <div class="container">
-    <h2 id="formHeading">भाजपा कार्यालय पर आपका स्वागत है</h2>
-
-    <form id="visitor-form" autocomplete="off">
-      <label for="mobile">मोबाइल नंबर:</label>
-      <div class="row">
-        <input type="tel" id="mobile" name="mobile" required pattern="[0-9]{10}" placeholder="10 अंकों का मोबाइल नंबर" style="flex:1;">
-        <span id="mobileSearch" title="खोजें" style="cursor:pointer;font-size:20px;margin-top:4px;">🔍</span>
-      </div>
-
-      <label for="name">नाम:</label>
-      <input type="text" id="name" name="name" required placeholder="अपना नाम दर्ज करें">
-
-      <label for="designation">पद:</label>
-      <input type="text" id="designation" name="designation" required placeholder="आपका पद दर्ज करें">
-
-      <label for="address">पता / वार्ड / बूथ:</label>
-      <input type="text" id="address" name="address" required placeholder="पूरा पता लिखें">
-
-      <label for="district">जिला:</label>
-      <select id="district" name="district" required onchange="updateMandals()">
-        <option value="">जिला चुनें</option>
-        <option value="Mandsaur">मंदसौर</option>
-        <option value="Ratlam">रतलाम</option>
-        <option value="Nimach">नीमच</option>
-        <option value="Other">अन्य जिले से</option>
-      </select>
-
-      <label for="mandal">मंडल:</label>
-      <select id="mandal" name="mandal" required>
-        <option value="">पहले जिला चुनें</option>
-      </select>
-
-      <label for="reason">आने का कारण:</label>
-      <select id="reason" name="reason" required>
-        <option value="">कारण चुनें</option>
+    <h2>स्वागतम! भारतीय जनता पार्टी</h2>
+    <form id="visitorForm">
+      <label>मोबाइल नंबर</label>
+      <input type="tel" id="mobile" maxlength="10" placeholder="अपना 10 अंकों का मोबाइल नंबर डालें" required>
+      <label>पूरा नाम</label>
+      <input type="text" id="name" placeholder="अपना नाम लिखें" required>
+      <label>जिला</label>
+      <select id="district"><option>Mandsaur</option><option>Neemuch</option><option>Ratlam</option><option>Other</option></select>
+      <label>मंडल</label>
+      <select id="mandal"><option value="">-- चुनें --</option></select>
+      <label>पद (यदि कोई हो)</label>
+      <input type="text" id="designation" placeholder="जैसे: मंडल अध्यक्ष, कार्यकर्ता...">
+      <label>आने का कारण / कार्यक्रम</label>
+      <select id="reason" required>
+        <option value="">-- चुनें --</option>
         <option>कार्यालय पर बैठक</option>
         <option>जिला अध्यक्ष से भेंट</option>
         <option>ट्रांसफर / शासकीय कार्य / शिकायत</option>
         <option>कार्यालय पर सामान्य उपस्थिति</option>
         <option>अन्य कोई कार्य</option>
       </select>
-
-      <label>सेल्फी लें:</label>
-      <video id="camera" autoplay playsinline></video>
-      <canvas id="snapshot" style="display:none;"></canvas>
-      <input type="hidden" id="selfieData" name="selfieData">
-      <input type="button" value="📷 फोटो लें" id="btnSnap">
-
-      <button type="submit" id="btnSubmit">सबमिट करें</button>
-      <small class="help">डेटा पहले सेव होगा, फोटो बैकग्राउंड में अपलोड होगी।</small>
+      <div id="activeEventDiv" style="display:none; margin-top:10px; padding:10px; background:#e3f2fd; border-radius:8px; border:1px solid #90caf9; color:#0d47a1; font-weight:bold; text-align:center;"></div>
+      <label>पता</label>
+      <input type="text" id="address" placeholder="गाँव/वार्ड का नाम">
+      <div id="camera-area">
+        <label>आपकी फोटो</label>
+        <video id="video" autoplay playsinline></video>
+        <canvas id="canvas" style="display:none;"></canvas>
+        <button type="button" id="snapBtn" style="margin-top:5px; background:#444;">फोटो खींचें</button>
+      </div>
+      <input type="hidden" id="selfieData">
+      <button type="submit" id="submitBtn">सबमिट करें</button>
     </form>
   </div>
+<script>
+  // Unified Config
+  const firebaseConfig = { apiKey: "AIzaSyCI1EL8iFVJnOWbd58Bq5JrJg_IgZuCvA0", authDomain: "mandaleventall.firebaseapp.com", projectId: "mandaleventall", storageBucket: "mandaleventall.firebasestorage.app", messagingSenderId: "900190130114", appId: "1:900190130114:web:bc7d9e2283b3ac57bc505b", measurementId: "G-2BBZZNRS88" };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const storage = firebase.storage();
 
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  const MANDALS = ["भेंसोदा","भानपुरा","गरोठ","मेलखेडा","खड़ावदा","शामगढ़","सुवासरा","बसाई","सीतामऊ","क्यामपुर","सीतामऊ ग्रामीण","गुर्जर बरडिया","धुंदधड़का","बुढा","पिपलिया मंडी","मल्हारगढ़","दलोदा","मगरामाता जी","मंदसौर ग्रामीण","मंदसौर उत्तर","मंदसौर दक्षिण","अन्य"];
+  const mSel = document.getElementById('mandal');
+  MANDALS.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m; mSel.appendChild(o); });
 
-  <script>
-    // 1. UPDATED MANDAL DATA
-    const mandalData = {
-      "Mandsaur": [
-        "भेंसोदा", "भानपुरा", "गरोठ", "मेलखेडा", "खड़ावदा", "शामगढ़", "सुवासरा", "बसाई",
-        "सीतामऊ", "क्यामपुर", "सीतामऊ ग्रामीण", "गुर्जर बरडिया", "धुंदधड़का", "बुढा",
-        "पिपलिया मंडी", "मल्हारगढ़", "दलोदा", "मगरामाता जी", "मंदसौर ग्रामीण", "मंदसौर उत्तर", "मंदसौर दक्षिण"
-      ],
-      "Ratlam": [
-        "श्यामा प्रसाद मुखर्जी", "कुशाभाऊ ठाकरे", "सुरजमल जैन", "पं. दीनदयाल उपाध्याय",
-        "डॉ. भीमराव अंबेडकर", "नामली", "बांगरोद", "थरड़", "शबरी", "चन्द्रशेखर आज़ाद",
-        "सैलाना", "रावटी", "सरवन खेड़ा", "बाजना", "राजापुर माताजी", "जावरा नगर",
-        "मिंडलेश्वर महादेव", "डॉ. लक्ष्मीनारायण पाण्डेय", "पिपलौदा", "सुखेड़ा",
-        "आलोट", "ताल", "बड़ावदा", "खारवाकला", "जोगणिया माताजी"
-      ],
-      "Nimach": [
-        "दीनदयाल मंडल, नीमच", "मुखर्जी मंडल, नीमच", "उत्तर मंडल, नीमच", "दक्षिण मंडल, नीमच",
-        "भादवामाता मंडल, नीमच", "कुशाभाऊ मंडल, नीमच", "दीनदयाल मंडल, मनासा",
-        "मुखर्जी मंडल, मनासा", "कुकडेश्वर मंडल, मनासा", "रामपुरा मंडल, मनासा",
-        "कुशाभाऊ मंडल, मनासा", "जावद मंडल, जावद", "मोरवन मंडल, जावद",
-        "रतनगढ़ मंडल, जावद", "सिंगोली मंडल, जावद"
-      ],
-      "Other": ["अन्य जिले से"]
+  let activeEventName = null;
+  // Listen for active events from 'visitor_events_list'
+  db.collection('visitor_events_list').where('active','==',true).onSnapshot(snap=>{
+    if(!snap.empty){
+      activeEventName = snap.docs[0].data().name;
+      const div = document.getElementById('activeEventDiv');
+      div.style.display = 'block';
+      div.innerText = `वर्तमान कार्यक्रम: ${activeEventName}`;
+    } else {
+      activeEventName = null;
+      document.getElementById('activeEventDiv').style.display = 'none';
+    }
+  });
+
+  // Camera Logic
+  const video=document.getElementById('video'), canvas=document.getElementById('canvas'), snapBtn=document.getElementById('snapBtn');
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}}).then(s=>{ video.srcObject=s; document.getElementById('camera-area').style.display='block'; }).catch(e=>console.log(e));
+  snapBtn.addEventListener('click',()=>{
+    canvas.width=video.videoWidth; canvas.height=video.videoHeight;
+    canvas.getContext('2d').drawImage(video,0,0);
+    document.getElementById('selfieData').value = canvas.toDataURL('image/jpeg',0.7);
+    video.style.display='none'; canvas.style.display='block';
+    snapBtn.innerText='दोबारा खींचें'; snapBtn.onclick=()=>{ video.style.display='block'; canvas.style.display='none'; snapBtn.innerText='फोटो खींचें'; }
+  });
+
+  document.getElementById('visitorForm').addEventListener('submit', async(e)=>{
+    e.preventDefault();
+    const btn=document.getElementById('submitBtn'); btn.disabled=true; btn.innerText='कृपया रुकें...';
+    
+    const selfieVal = document.getElementById('selfieData').value;
+    let selfieUrl = "";
+    
+    if(selfieVal){
+      try {
+        const ref = storage.ref(`visitor_selfies/${Date.now()}.jpg`);
+        await ref.putString(selfieVal, 'data_url');
+        selfieUrl = await ref.getDownloadURL();
+      } catch(err) { console.error("Upload error", err); }
+    }
+
+    const data = {
+      mobile: document.getElementById('mobile').value,
+      name: document.getElementById('name').value,
+      district: document.getElementById('district').value,
+      mandal: document.getElementById('mandal').value,
+      designation: document.getElementById('designation').value,
+      reason: document.getElementById('reason').value,
+      address: document.getElementById('address').value,
+      eventName: activeEventName, // attach active event automatically
+      selfie: selfieUrl,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
 
-    // 2. LOGIC: Update Mandal Dropdown
-    function updateMandals(selectedMandal = null) {
-      const distSelect = document.getElementById("district");
-      const mandalSelect = document.getElementById("mandal");
-      const district = distSelect.value;
-      
-      mandalSelect.innerHTML = '<option value="">मंडल चुनें</option>';
+    try {
+      await db.collection('visitors').add(data);
+      Swal.fire('सफल!', 'आपकी जानकारी दर्ज हो गई है।', 'success');
+      e.target.reset(); document.getElementById('selfieData').value=''; video.style.display='block'; canvas.style.display='none';
+      btn.disabled=false; btn.innerText='सबमिट करें';
+    } catch(err) {
+      Swal.fire('त्रुटि', 'डेटा सेव नहीं हो पाया।', 'error');
+      btn.disabled=false; btn.innerText='सबमिट करें';
+    }
+  });
 
-      if (district && mandalData[district]) {
-        mandalData[district].forEach(m => {
-          const op = document.createElement("option");
-          op.value = m;
-          op.textContent = m;
-          mandalSelect.appendChild(op);
-        });
-      }
-
-      if(selectedMandal) {
-        // Wait briefly for DOM to update
-        setTimeout(() => { mandalSelect.value = selectedMandal; }, 50);
+  // Auto-fill logic
+  document.getElementById('mobile').addEventListener('blur', async function(){
+    if(this.value.length===10){
+      const snap = await db.collection('visitors').where('mobile','==',this.value).limit(1).get();
+      if(!snap.empty){
+        const d = snap.docs[0].data();
+        document.getElementById('name').value = d.name||'';
+        document.getElementById('mandal').value = d.mandal||'';
+        document.getElementById('designation').value = d.designation||'';
+        document.getElementById('address').value = d.address||'';
+        Swal.fire({toast:true, position:'top-end', icon:'info', title:'पुराना डेटा मिल गया!', timer:2000, showConfirmButton:false});
       }
     }
-
-    // 3. FIREBASE SETUP
-    const firebaseConfig = {
-      apiKey: "AIzaSyD-xaGtrczkUCT7rwEOuRnHzVE9AohYsKU",
-      authDomain: "bjplivefirebase.firebaseapp.com",
-      projectId: "bjplivefirebase",
-      storageBucket: "bjplivefirebase.firebasestorage.app",
-      messagingSenderId: "236867156337",
-      appId: "1:236867156337:web:1fbd6c535689a6f34d5ed0",
-      measurementId: "G-M5KY8DW9JD"
-    };
-    if (!firebase.apps?.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const storage = firebase.storage();
-
-    const TELEGRAM_BOT_TOKEN = "8064306737:AAFvXvc3vIT1kyccGiPbpYGCAr9dgKJcRzw";
-    const TELEGRAM_CHAT_ID = "733804072";
-
-    const $ = (id) => document.getElementById(id);
-    const normMobile = (s) => (s || "").replace(/\D/g, "").slice(-10);
-
-    // 4. CAMERA
-    async function compressDataURL(dataURL, maxW=1024, maxH=1024, quality=0.6){
-      return new Promise((resolve)=>{
-        const img = new Image();
-        img.onload = ()=>{
-          let {width:w, height:h} = img;
-          const ratio = Math.min(maxW/w, maxH/h, 1);
-          const cw = Math.round(w*ratio), ch = Math.round(h*ratio);
-          const c = document.createElement('canvas'); c.width=cw; c.height=ch;
-          c.getContext('2d').drawImage(img,0,0,cw,ch);
-          resolve(c.toDataURL('image/jpeg', quality));
-        };
-        img.src = dataURL;
-      });
-    }
-
-    const video = $('camera'), canvas = $('snapshot'), selfieInput = $('selfieData');
-    async function startCamera(){
-      try { 
-        const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } }); 
-        video.srcObject = s; 
-      } catch (e) { console.warn('Camera error:', e); }
-    }
-    startCamera();
-
-    $('btnSnap').addEventListener('click', async () => {
-      const ctx = canvas.getContext('2d');
-      canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-      ctx.drawImage(video, 0, 0);
-      const raw = canvas.toDataURL('image/jpeg');
-      const compact = await compressDataURL(raw);
-      selfieInput.value = compact;
-      canvas.style.display = 'block';
-    });
-
-    // 5. AUTOFILL
-    (function bindActiveEvent(){
-      const headingEl = $('formHeading');
-      const reasonSel = $('reason');
-      db.collection('events').where('active','==',true).limit(1).onSnapshot(s=>{
-        const d=s.docs[0]?.data(); const evName=(d?.name||'').toString().trim();
-        if(evName){ 
-            headingEl.textContent=`इवेंट: ${evName}`; 
-            if(!Array.from(reasonSel.options).some(o=>o.value===evName)){
-                const op=document.createElement('option'); op.value=evName; op.textContent=evName;
-                reasonSel.insertBefore(op, reasonSel.children[1]);
-            }
-            reasonSel.value = evName;
-        } else { headingEl.textContent='भाजपा कार्यालय पर आपका स्वागत है'; }
-      });
-    })();
-
-    async function autofillFromMobile(mobile){
-      if (mobile.length !== 10) return;
-      try{
-        const [oldSnap, newSnap] = await Promise.all([
-          db.collection("jila_format_2025").where("मोबाइल", "==", mobile).limit(1).get(),
-          db.collection("visitors").where("mobile", "==", mobile).orderBy("timestamp","desc").limit(1).get()
-        ]);
-        const doc = newSnap.docs[0] || oldSnap.docs[0];
-        if (doc) {
-          const data = doc.data();
-          $('name').value = data["नाम"] || data["name"] || $('name').value;
-          $('designation').value = data["पद"] || data["designation"] || $('designation').value;
-          $('address').value = data["पता"] || data["address"] || $('address').value;
-          
-          let dist = data["जिला"] || data["district"] || "Mandsaur";
-          let mandal = data["मंडल"] || data["mandal"];
-
-          // Check if district exists in logic, else default to 'Other'
-          if (!mandalData[dist] && dist !== "Other") {
-             dist = "Other"; 
-          }
-          
-          $('district').value = dist;
-          updateMandals(mandal);
-        }
-      } catch (err) { console.warn(err); }
-    }
-
-    $('mobile').addEventListener('blur', (e)=>{ const m = normMobile(e.target.value); e.target.value = m; autofillFromMobile(m); });
-    $('mobileSearch')?.addEventListener('click', ()=>{ $('mobile').dispatchEvent(new Event('blur')); });
-    $('mobile').addEventListener('keyup', (e)=>{ if (e.key === 'Enter') $('mobile').dispatchEvent(new Event('blur')); });
-
-    // 6. SUBMIT
-    let submitting = false;
-    $('visitor-form').addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      if (submitting) return; submitting = true;
-      const btn = $('btnSubmit'); btn.disabled = true; btn.textContent = 'सबमिट हो रहा है…';
-
-      const data = {
-         name: $('name').value.trim(),
-         mobile: normMobile($('mobile').value.trim()),
-         designation: $('designation').value.trim(),
-         address: $('address').value.trim(),
-         district: $('district').value,
-         mandal: $('mandal').value,
-         reason: $('reason').value,
-         selfie: null, selfieUploading: true,
-         timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      };
-
-      const selfieData = $('selfieData').value;
-      if(!data.name || !data.mobile || !data.district || !data.mandal || !selfieData){
-        Swal.fire("Incomplete", "कृपया सभी फ़ील्ड भरें।", "warning");
-        btn.disabled = false; btn.textContent = 'सबमिट करें'; submitting = false; return;
-      }
-
-      try{
-        const docRef = await db.collection("visitors").add(data);
-        (async ()=>{
-          try{
-            const blob = await (await fetch(selfieData)).blob();
-            const path = `selfies/${Date.now()}_${data.mobile}.jpg`;
-            const up = await storage.ref(path).put(blob);
-            const url = await up.ref.getDownloadURL();
-            await docRef.update({ selfie: url, selfieUploading: false });
-          }catch(e){ console.warn('Upload fail', e); }
-        })();
-
-        try{
-          const text = `नया आगंतुक (${data.district}):\nनाम: ${data.name}\nमोबाइल: ${data.mobile}\nपद: ${data.designation}\nमंडल: ${data.mandal}\nकारण: ${data.reason}`;
-          fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text })
-          }).catch(()=>{});
-        }catch(_){}
-
-        Swal.fire("✅ धन्यवाद!", "जानकारी सेव हो गई है।", "success");
-        e.target.reset(); canvas.style.display = "none"; selfieInput.value = ""; 
-        updateMandals(); startCamera();
-
-      } catch (err) {
-        console.error(err);
-        Swal.fire("Error", "कुछ त्रुटि हुई।", "error");
-      }
-      btn.disabled = false; btn.textContent = 'सबमिट करें'; submitting = false;
-    });
-  </script>
+  });
+</script>
 </body>
 </html>
